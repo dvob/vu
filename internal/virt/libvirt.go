@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"gopkg.in/cheggaaa/pb.v1"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/libvirt/libvirt-go-xml"
 	"github.com/dsbrng25b/cis/internal/cloud-init"
@@ -85,6 +86,7 @@ func (m *LibvirtManager) removeDomain(name string) error {
 	return nil
 }
 
+// creates a volume and uploads the image from the url src into the volume
 func (m *LibvirtManager) CreateBaseImage(name string, src string) error {
 	var size uint64
 	var stream io.Reader
@@ -98,8 +100,6 @@ func (m *LibvirtManager) CreateBaseImage(name string, src string) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse url: %s", err)
 	}
-
-	fmt.Println("url: ", u.String())
 
 	if u.Scheme == "file" {
 		file, err := os.Open(u.Path)
@@ -159,7 +159,13 @@ func (m *LibvirtManager) CreateBaseImage(name string, src string) error {
 		return fmt.Errorf("failed to create volume: %s", err)
 	}
 
+	bar := pb.New(int(size)).SetUnits(pb.U_BYTES)
+	bar.Start()
+
+	stream = bar.NewProxyReader(stream)
+
 	err = m.l.StorageVolUpload(sv, stream, 0, 0, 0)
+	bar.Finish()
 	if err != nil {
 		m.l.StorageVolDelete(sv, 0)
 		return fmt.Errorf("failed to upload content: %s", err)
@@ -355,6 +361,7 @@ func (m *LibvirtManager) Create(name string, baseImage string) error {
 	return m.createVm(name, baseImage, *vol)
 }
 
+// Remove removes the domain and its volumes
 func (m *LibvirtManager) Remove(name string) error {
 	err := m.removeDomain(name)
 	if err != nil {
