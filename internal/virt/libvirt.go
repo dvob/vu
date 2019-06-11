@@ -364,5 +364,9 @@ func (m *LibvirtManager) Remove(name string) error {
 	if err != nil {
 		return err
 	}
+	err = m.removeVolume(fmt.Sprintf("config_%s", name))
+	if err != nil {
+		return err
+	}
 	return nil
 }
