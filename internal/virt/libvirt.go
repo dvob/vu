@@ -10,14 +10,8 @@ import (
 	"github.com/libvirt/libvirt-go-xml"
 )
 
-const CONFIG_VOL_PREFIX = "config_"
-const BASE_IMAGE_PREFIX = "cis_base_"
-
-type Manager interface {
-	CreateBaseImage(name string, src string) error
-	Create(name string, baseImage string) error
-	Remove(name string) error
-}
+const configVolPreifx = "config_"
+const baseImagePrefix = "cis_base_"
 
 type LibvirtManager struct {
 	l    *libvirt.Libvirt
@@ -55,7 +49,7 @@ func NewDefaultVMConfig(name, baseImage string) *VMConfig {
 		VCPU:            1,
 		Network:         "default",
 		BaseImageVolume: baseImage,
-		ConfigVolume:    CONFIG_VOL_PREFIX + name,
+		ConfigVolume:    configVolPreifx + name,
 	}
 }
 
@@ -83,7 +77,7 @@ func (m *LibvirtManager) Remove(name string) error {
 	if err != nil {
 		return err
 	}
-	err = m.removeVolume(fmt.Sprintf(CONFIG_VOL_PREFIX, name))
+	err = m.removeVolume(fmt.Sprintf(configVolPreifx, name))
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ var metaFileName = "meta-data"
 var userFileName = "user-data"
 var networkFileName = "network-config"
 
+// WriteToDir writes the cloud init configuration to a directory
 func (c *Config) WriteToDir(dir string) error {
 	var (
 		meta    string
@@ -64,7 +65,8 @@ func (c *Config) WriteToDir(dir string) error {
 	return nil
 }
 
-func (c *Config) CreateIso() ([]byte, error) {
+// CreateISO returns the cloud init configuration as ISO image
+func (c *Config) CreateISO() ([]byte, error) {
 	tmp, err := ioutil.TempDir("", tmpPrefix)
 	if err != nil {
 		return nil, err

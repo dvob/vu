@@ -23,7 +23,7 @@ func newCreateCmd() *cobra.Command {
 	)
 
 	// set default
-	memory.Set("1024m")
+	_ = memory.Set("1024m")
 	cmd := &cobra.Command{
 		Use:   "create <name> <base_image>",
 		Short: "create a new VM from base image",
@@ -107,10 +107,9 @@ func newStartCmd() *cobra.Command {
 
 func newListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list <name>",
+		Use:     "list",
 		Short:   "list VMs",
 		Aliases: []string{"ls"},
-		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			vms, err := mgr.List()
 			if err != nil {

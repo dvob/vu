@@ -159,7 +159,7 @@ func (m *LibvirtManager) createVolume(name string, size uint64, stream io.Reader
 }
 
 func (m *LibvirtManager) createConfigVolume(name string, cfg *cloudinit.Config) (*libvirt.StorageVol, error) {
-	data, err := cfg.CreateIso()
+	data, err := cfg.CreateISO()
 	if err != nil {
 		return nil, err
 	}

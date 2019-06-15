@@ -13,11 +13,13 @@ type Config struct {
 	NetworkConfig *NetworkConfig
 }
 
+// NewDefaultConfig returns a default cloud config with hostname and instance id
+// set to name, one user with full sudo rights and a ssh key
 func NewDefaultConfig(name, user, sshAuthKey string) *Config {
 	return &Config{
 		MetaData: MetaData{
 			Hostname:   name,
-			InstanceId: name,
+			InstanceID: name,
 		},
 		UserData: UserData{
 			Hostname: name,
@@ -60,11 +62,10 @@ func (c *Config) String() (string, error) {
 	return fmt.Sprintf("### meta-data ###\n%s\n### user-data ###\n%s\n### network-config ###\n%s\n", meta, user, network), nil
 }
 
-// MetaData
-
+// MetaData is a struct to render the meta data of the cloud init configuration
 type MetaData struct {
 	Hostname   string `yaml:"local-hostname"`
-	InstanceId string `yaml:"instnace-id,omitempty"`
+	InstanceID string `yaml:"instnace-id,omitempty"`
 }
 
 func (md *MetaData) String() (string, error) {
@@ -72,8 +73,7 @@ func (md *MetaData) String() (string, error) {
 	return string(data), err
 }
 
-// UserData
-
+// UserData is a struct to render the user data of the cloud init configuration
 type UserData struct {
 	Hostname string
 	//Password string
@@ -85,14 +85,14 @@ func (ud *UserData) String() (string, error) {
 	return fmt.Sprintf("#cloud-config\n%s", string(data)), err
 }
 
+// User definition of cloud init configuration
 type User struct {
 	Name              string   `yaml:"name"`
 	SSHAuthorizedKeys []string `yaml:"ssh-authorized-keys,omitempty"`
 	Sudo              string   `yaml:"sudo,omitempty"`
 }
 
-// NetworkConfig
-
+// NetworkConfig definion of cloud init configuration
 type NetworkConfig struct{}
 
 func (nc *NetworkConfig) String() (string, error) {

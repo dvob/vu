@@ -13,7 +13,7 @@ var gitCommit = "n/a"
 var buildTime = "n/a"
 
 var virStoragePool string
-var virConnectUrl string
+var virConnectURL string
 var mgr *virt.LibvirtManager
 
 func newRootCmd() *cobra.Command {
@@ -21,7 +21,7 @@ func newRootCmd() *cobra.Command {
 		Use: "cis",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			var err error
-			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectUrl)
+			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectURL)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -32,16 +32,40 @@ func newRootCmd() *cobra.Command {
 		newConfigCmd(),
 		newImageCmd(),
 		newCreateCmd(),
+		newListCmd(),
 		newStartCmd(),
 		newStopCmd(),
 		newRemoveCmd(),
 		newVersionCmd(),
+		newCompletionCmd(),
 	)
 	return rootCmd
 }
 
 func addPoolOption(fs *flag.FlagSet, pool *string) {
 	fs.StringVar(pool, "pool", "default", "The storage pool to use")
+}
+
+func newCompletionCmd() *cobra.Command {
+	var shell string
+	cmd := &cobra.Command{
+		Use:       "completion <shell>",
+		ValidArgs: []string{"bash", "zsh"},
+		Args:      cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			shell = args[0]
+			switch shell {
+			case "bash":
+				newRootCmd().GenBashCompletion(os.Stdout)
+			case "zsh":
+				newRootCmd().GenZshCompletion(os.Stdout)
+			default:
+				fmt.Println("unknown shell")
+				os.Exit(1)
+			}
+		},
+	}
+	return cmd
 }
 
 func newVersionCmd() *cobra.Command {
@@ -58,5 +82,5 @@ func newVersionCmd() *cobra.Command {
 }
 
 func main() {
-	newRootCmd().Execute()
+	_ = newRootCmd().Execute()
 }
