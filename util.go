@@ -7,17 +7,17 @@ import (
 // byte size implements value interface
 type ByteSize uint64
 
-func (b ByteSize) String() string {
-	return bytefmt.ByteSize(uint64(b))
+func (b *ByteSize) String() string {
+	return bytefmt.ByteSize(uint64(*b))
 }
 
-func (b ByteSize) Set(value string) (err error) {
-	btmp, err := bytefmt.ToBytes(value)
-	b = ByteSize(btmp)
+func (b *ByteSize) Set(value string) (err error) {
+	bval, err := bytefmt.ToBytes(value)
+	*b = ByteSize(bval)
 	return err
 }
 
 //TODO: what should Type implement?
-func (b ByteSize) Type() string {
+func (b *ByteSize) Type() string {
 	return "uint64"
 }

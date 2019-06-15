@@ -16,11 +16,14 @@ func newCreateCmd() *cobra.Command {
 		user           string
 		sshAuthKeyFile string
 		vcpus          int
-		memory         = ByteSize(1000 * 1000 * 1024)
+		memory         ByteSize
 		network        string
 		vmCfg          *virt.VMConfig
 		cloudCfg       *cloudinit.Config
 	)
+
+	// set default
+	memory.Set("1024m")
 	cmd := &cobra.Command{
 		Use:   "create <name> <base_image>",
 		Short: "create a new VM from base image",
