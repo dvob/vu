@@ -21,7 +21,7 @@ func newRootCmd() *cobra.Command {
 		Use: "cis",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			var err error
-			mgr, err = virt.NewLibvirtManager(virConnectUrl, virStoragePool)
+			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectUrl)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)

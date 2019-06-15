@@ -20,9 +20,8 @@ type Manager interface {
 }
 
 type LibvirtManager struct {
-	l       *libvirt.Libvirt
-	pool    string
-	network string
+	l    *libvirt.Libvirt
+	pool string
 }
 
 type VMConfig struct {
@@ -47,7 +46,6 @@ func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
 	return &LibvirtManager{
 		l,
 		pool,
-		network,
 	}, nil
 }
 
@@ -183,7 +181,7 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 				libvirtxml.DomainInterface{
 					Source: &libvirtxml.DomainInterfaceSource{
 						Network: &libvirtxml.DomainInterfaceSourceNetwork{
-							Network: m.network,
+							Network: cfg.Network,
 						},
 					},
 				},

@@ -15,6 +15,9 @@ func newCreateCmd() *cobra.Command {
 		baseImage      string
 		user           string
 		sshAuthKeyFile string
+		vcpus          int
+		memory         = ByteSize(1000 * 1000 * 1024)
+		network        string
 		vmCfg          *virt.VMConfig
 		cloudCfg       *cloudinit.Config
 	)
@@ -27,6 +30,9 @@ func newCreateCmd() *cobra.Command {
 			baseImage = args[1]
 
 			vmCfg = virt.NewDefaultVMConfig(name, baseImage)
+			vmCfg.Memory = uint(memory)
+			vmCfg.VCPU = vcpus
+			vmCfg.Network = network
 
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
@@ -43,6 +49,9 @@ func newCreateCmd() *cobra.Command {
 
 		},
 	}
+	cmd.Flags().Var(&memory, "memory", "amount of memory")
+	cmd.Flags().IntVar(&vcpus, "cpus", 1, "amount of cpus")
+	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addSSHUserOption(cmd.Flags(), &user)
 	return cmd
