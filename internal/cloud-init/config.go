@@ -2,12 +2,65 @@ package cloudinit
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os/user"
-	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 )
+
+// Config represents all configurations for cloud init
+type Config struct {
+	MetaData      MetaData
+	UserData      UserData
+	NetworkConfig *NetworkConfig
+}
+
+func NewDefaultConfig(name, user, sshAuthKey string) *Config {
+	return &Config{
+		MetaData: MetaData{
+			Hostname:   name,
+			InstanceId: name,
+		},
+		UserData: UserData{
+			Hostname: name,
+			Users: []User{
+				User{
+					Name: user,
+					Sudo: "ALL=(ALL) NOPASSWD:ALL",
+					SSHAuthorizedKeys: []string{
+						sshAuthKey,
+					},
+				},
+			},
+		},
+	}
+}
+
+func (c *Config) String() (string, error) {
+	var (
+		meta    string
+		user    string
+		network string
+		err     error
+	)
+	meta, err = c.MetaData.String()
+	if err != nil {
+		fmt.Errorf("could not render meta data: %s", err)
+	}
+
+	user, err = c.UserData.String()
+	if err != nil {
+		fmt.Errorf("could not render user data: %s", err)
+	}
+
+	if c.NetworkConfig != nil {
+		network, err = c.NetworkConfig.String()
+		if err != nil {
+			fmt.Errorf("could not render network config: %s", err)
+		}
+	}
+	return fmt.Sprintf("### meta-data ###\n%s\n### user-data ###\n%s\n### network-config ###\n%s\n", meta, user, network), nil
+}
+
+// MetaData
 
 type MetaData struct {
 	Hostname   string `yaml:"local-hostname"`
@@ -19,11 +72,7 @@ func (md *MetaData) String() (string, error) {
 	return string(data), err
 }
 
-type User struct {
-	Name string `yaml:"name"`
-	SSHAuthorizedKeys []string `yaml:"ssh-authorized-keys,omitempty"`
-	Sudo string `yaml:"sudo,omitempty"`
-}
+// UserData
 
 type UserData struct {
 	Hostname string
@@ -36,49 +85,16 @@ func (ud *UserData) String() (string, error) {
 	return fmt.Sprintf("#cloud-config\n%s", string(data)), err
 }
 
-func userFromLocal() (*User, error) {
-	localUser, err := user.Current()
-	if err != nil {
-		return &User{}, err
-	}
-
-	path := filepath.Join(localUser.HomeDir, ".ssh", "id_rsa.pub")
-	ssh_authorized_key, err := ioutil.ReadFile(path)
-	if err != nil {
-		return &User{}, err
-	}
-
-	u := &User{
-		Name: localUser.Username,
-		Sudo: "ALL=(ALL) NOPASSWD:ALL",
-		SSHAuthorizedKeys: []string{
-			string(ssh_authorized_key),
-		},
-	}
-
-	return u, nil
+type User struct {
+	Name              string   `yaml:"name"`
+	SSHAuthorizedKeys []string `yaml:"ssh-authorized-keys,omitempty"`
+	Sudo              string   `yaml:"sudo,omitempty"`
 }
 
-func GetMetaData(hostname string) (string, error) {
-	md := &MetaData{
-		Hostname: hostname,
-		InstanceId: hostname,
-	}
+// NetworkConfig
 
-	return md.String()
-}
+type NetworkConfig struct{}
 
-func GetUserData(hostname string) (string, error) {
-	user, err := userFromLocal()
-	if err != nil {
-		return "", err
-	}
-	ud := &UserData{
-		Hostname: hostname,
-		Users: []User{
-			*user,
-		},
-	}
-
-	return ud.String()
+func (nc *NetworkConfig) String() (string, error) {
+	return "", nil
 }
