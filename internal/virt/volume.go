@@ -180,7 +180,10 @@ func (m *LibvirtManager) createConfigVolume(name string, cfg *cloudinit.Config) 
 	return vol, nil
 }
 
-func (m *LibvirtManager) cloneBaseImage(name string, baseImage string) (*libvirt.StorageVol, error) {
+// cloneBaseImage creates a clone from baseImage. baseImage has to be a qcow2 image.
+// With newSize the size of the new image can be specified. If newSize == 0 the size of the image
+// is the same as the base image has.
+func (m *LibvirtManager) cloneBaseImage(name string, baseImage string, newSize uint64) (*libvirt.StorageVol, error) {
 	sp, err := m.l.StoragePoolLookupByName(m.pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
@@ -195,10 +198,6 @@ func (m *LibvirtManager) cloneBaseImage(name string, baseImage string) (*libvirt
 	}
 	vol := &libvirtxml.StorageVolume{
 		Name: name,
-		//TODO allow to set size
-		// Capacity: &libvirtxml.StorageVolumeSize{
-		// 	Value: size,
-		// },
 		Target: &libvirtxml.StorageVolumeTarget{
 			Format: &libvirtxml.StorageVolumeTargetFormat{
 				Type: "qcow2",
@@ -210,6 +209,13 @@ func (m *LibvirtManager) cloneBaseImage(name string, baseImage string) (*libvirt
 				Type: "qcow2",
 			},
 		},
+	}
+
+	if newSize != 0 {
+		vol.Capacity = &libvirtxml.StorageVolumeSize{
+			Value: newSize,
+			Unit:  "b",
+		}
 	}
 
 	xml, err := vol.Marshal()

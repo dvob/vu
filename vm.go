@@ -20,6 +20,7 @@ func newCreateCmd() *cobra.Command {
 		network        string
 		vmCfg          *virt.VMConfig
 		cloudCfg       *cloudinit.Config
+		diskSize       ByteSize
 	)
 
 	// set default
@@ -32,10 +33,13 @@ func newCreateCmd() *cobra.Command {
 			baseImage = args[0]
 			name = args[1]
 
-			vmCfg = virt.NewDefaultVMConfig(name, baseImage)
-			vmCfg.Memory = uint(memory)
-			vmCfg.VCPU = vcpus
-			vmCfg.Network = network
+			vmCfg = &virt.VMConfig{
+				BaseImageVolume: baseImage,
+				Memory:          uint(memory),
+				VCPU:            vcpus,
+				Network:         network,
+				DiskSize:        uint64(diskSize),
+			}
 
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
@@ -51,6 +55,7 @@ func newCreateCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().Var(&memory, "memory", "amount of memory")
+	cmd.Flags().Var(&diskSize, "disk-size", "size of the cloned image")
 	cmd.Flags().IntVar(&vcpus, "cpus", 1, "amount of cpus")
 	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)

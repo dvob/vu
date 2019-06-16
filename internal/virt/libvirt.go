@@ -11,7 +11,7 @@ import (
 	"github.com/libvirt/libvirt-go-xml"
 )
 
-const configVolPreifx = "config_"
+const configVolPrefix = "config_"
 const baseImagePrefix = "cis_base_"
 
 type LibvirtManager struct {
@@ -24,7 +24,7 @@ type VMConfig struct {
 	VCPU            int
 	Network         string
 	BaseImageVolume string
-	ConfigVolume    string
+	DiskSize        uint64
 }
 
 func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
@@ -44,23 +44,13 @@ func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
 	}, nil
 }
 
-func NewDefaultVMConfig(name, baseImage string) *VMConfig {
-	return &VMConfig{
-		Memory:          1024000000, //1024MB
-		VCPU:            1,
-		Network:         "default",
-		BaseImageVolume: baseImage,
-		ConfigVolume:    configVolPreifx + name,
-	}
-}
-
 func (m *LibvirtManager) Create(name string, vmCfg *VMConfig, cloudCfg *cloudinit.Config) error {
-	mainVol, err := m.cloneBaseImage(name, vmCfg.BaseImageVolume)
+	mainVol, err := m.cloneBaseImage(name, vmCfg.BaseImageVolume, vmCfg.DiskSize)
 	if err != nil {
 		return err
 	}
 
-	configVol, err := m.createConfigVolume(vmCfg.ConfigVolume, cloudCfg)
+	configVol, err := m.createConfigVolume(configVolPrefix+name, cloudCfg)
 	if err != nil {
 		m.l.StorageVolDelete(*mainVol, 0)
 		return err
@@ -86,7 +76,7 @@ func (m *LibvirtManager) Remove(name string) error {
 	if err != nil {
 		return err
 	}
-	err = m.removeVolume(configVolPreifx + name)
+	err = m.removeVolume(configVolPrefix + name)
 	if err != nil {
 		return err
 	}
@@ -138,7 +128,7 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 	if err != nil {
 		return err
 	}
-	configVol, err := m.GetVolume(cfg.ConfigVolume)
+	configVol, err := m.GetVolume(configVolPrefix + name)
 	if err != nil {
 		return err
 	}
