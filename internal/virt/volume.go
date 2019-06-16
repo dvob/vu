@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/dsbrng25b/cis/internal/cloud-init"
@@ -15,13 +16,25 @@ import (
 )
 
 func (m *LibvirtManager) ImageList() ([]string, error) {
-	fmt.Println("not implemented yet")
-	return []string{}, nil
-}
+	var volNames = []string{}
+	sp, err := m.l.StoragePoolLookupByName(m.pool)
+	if err != nil {
+		return nil, fmt.Errorf("faild to get storage pool: %s", err)
+	}
 
-func (m *LibvirtManager) ImageListAll() ([]string, error) {
-	fmt.Println("not implemented yet")
-	return []string{}, nil
+	numVols, err := m.l.StoragePoolNumOfVolumes(sp)
+	if err != nil {
+		return nil, err
+	}
+	vols, _, err := m.l.StoragePoolListAllVolumes(sp, numVols, 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, vol := range vols {
+		volNames = append(volNames, vol.Name)
+	}
+	sort.Strings(volNames)
+	return volNames, nil
 }
 
 // creates a volume and uploads the image from the url src into the volume
@@ -89,9 +102,7 @@ func (m *LibvirtManager) CreateBaseImage(name string, src string) error {
 }
 
 func (m *LibvirtManager) ImageRemove(name string) error {
-	//TODO
-	fmt.Println("not implemented yet")
-	return nil
+	return m.removeVolume(name)
 }
 
 func (m *LibvirtManager) GetVolume(name string) (*libvirt.StorageVol, error) {

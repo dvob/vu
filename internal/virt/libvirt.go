@@ -3,6 +3,7 @@ package virt
 import (
 	"fmt"
 	"net"
+	"sort"
 	"time"
 
 	"github.com/digitalocean/go-libvirt"
@@ -77,7 +78,7 @@ func (m *LibvirtManager) Remove(name string) error {
 	if err != nil {
 		return err
 	}
-	err = m.removeVolume(fmt.Sprintf(configVolPreifx, name))
+	err = m.removeVolume(configVolPreifx + name)
 	if err != nil {
 		return err
 	}
@@ -85,18 +86,42 @@ func (m *LibvirtManager) Remove(name string) error {
 }
 
 func (m *LibvirtManager) Start(name string) error {
-	fmt.Println("not implemented yet")
-	return nil
+	dom, err := m.l.DomainLookupByName(name)
+	if err != nil {
+		return err
+	}
+
+	return m.l.DomainCreate(dom)
 }
 
-func (m *LibvirtManager) Stop(name string) error {
-	fmt.Println("not implemented yet")
-	return nil
+func (m *LibvirtManager) Shutdown(name string, force bool) error {
+	dom, err := m.l.DomainLookupByName(name)
+	if err != nil {
+		return err
+	}
+
+	if force {
+		return m.l.DomainDestroy(dom)
+	}
+	return m.l.DomainShutdown(dom)
 }
 
 func (m *LibvirtManager) List() ([]string, error) {
-	fmt.Println("not implemented yet")
-	return []string{}, nil
+	var domNames = []string{}
+	numDomains, err := m.l.ConnectNumOfDomains()
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(numDomains)
+	domains, _, err := m.l.ConnectListAllDomains(numDomains, 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, dom := range domains {
+		domNames = append(domNames, dom.Name)
+	}
+	sort.Strings(domNames)
+	return domNames, nil
 }
 
 func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {

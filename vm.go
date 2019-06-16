@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/dsbrng25b/cis/internal/cloud-init"
 	"github.com/dsbrng25b/cis/internal/virt"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
 )
 
 func newCreateCmd() *cobra.Command {
@@ -125,21 +126,25 @@ func newListCmd() *cobra.Command {
 	return cmd
 }
 
-func newStopCmd() *cobra.Command {
-	var name string
+func newShutdownCmd() *cobra.Command {
+	var (
+		name  string
+		force bool
+	)
 	cmd := &cobra.Command{
-		Use:   "stop <name>",
-		Short: "stop VM",
+		Use:   "shutdown <name>",
+		Short: "shutdown VM",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			name = args[0]
 
-			err := mgr.Stop(name)
+			err := mgr.Shutdown(name, force)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 		},
 	}
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "force shutdown")
 	return cmd
 }

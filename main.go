@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dsbrng25b/cis/internal/virt"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-	"os"
 )
 
 var version = "n/a"
@@ -34,7 +35,7 @@ func newRootCmd() *cobra.Command {
 		newCreateCmd(),
 		newListCmd(),
 		newStartCmd(),
-		newStopCmd(),
+		newShutdownCmd(),
 		newRemoveCmd(),
 		newVersionCmd(),
 		newCompletionCmd(),

@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 func newImageCmd() *cobra.Command {
@@ -45,13 +46,12 @@ func newImageGetCmd() *cobra.Command {
 }
 
 func newImageListCmd() *cobra.Command {
-	//TODO implement showAll
-	var showAll bool
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "list all base images",
+		Use:     "list",
+		Short:   "list images",
+		Aliases: []string{"ls"},
 		Run: func(cmd *cobra.Command, args []string) {
-			images, err := mgr.ImageListAll()
+			images, err := mgr.ImageList()
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -61,15 +61,15 @@ func newImageListCmd() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().BoolVar(&showAll, "all", false, "Show all images instead of only base images")
 	return cmd
 }
 
 func newImageRemoveCmd() *cobra.Command {
 	var name string
 	cmd := &cobra.Command{
-		Use:   "remove <name>",
-		Short: "remove image",
+		Use:     "remove <name>",
+		Short:   "remove image",
+		Aliases: []string{"rm"},
 		Run: func(cmd *cobra.Command, args []string) {
 			name = args[0]
 			err := mgr.ImageRemove(name)

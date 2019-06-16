@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/dsbrng25b/cis/internal/cloud-init"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/dsbrng25b/cis/internal/cloud-init"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 )
 
 func addSSHUserOption(fs *flag.FlagSet, dest *string) {
