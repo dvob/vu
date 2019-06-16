@@ -125,12 +125,12 @@ func (m *LibvirtManager) List() ([]string, error) {
 }
 
 func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
-	baseImage, err := m.GetVolume(cfg.BaseImageVolume)
+	image, err := m.GetVolume(name)
 	if err != nil {
-		return fmt.Errorf("failed to clone %s: %s", cfg.BaseImageVolume, err)
+		return err
 	}
 
-	path, err := m.l.StorageVolGetPath(*baseImage)
+	path, err := m.l.StorageVolGetPath(*image)
 	if err != nil {
 		return err
 	}
