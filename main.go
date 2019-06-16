@@ -28,6 +28,7 @@ func newRootCmd() *cobra.Command {
 				os.Exit(1)
 			}
 		},
+		BashCompletionFunction: bash_completion_func,
 	}
 	rootCmd.AddCommand(
 		newConfigCmd(),

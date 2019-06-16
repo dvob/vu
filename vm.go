@@ -30,8 +30,8 @@ func newCreateCmd() *cobra.Command {
 		Short: "create a new VM from base image",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
-			baseImage = args[1]
+			baseImage = args[0]
+			name = args[1]
 
 			vmCfg = virt.NewDefaultVMConfig(name, baseImage)
 			vmCfg.Memory = uint(memory)
