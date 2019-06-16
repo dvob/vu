@@ -17,22 +17,21 @@ import (
 
 func (m *LibvirtManager) ImageList() ([]string, error) {
 	var volNames = []string{}
+
 	sp, err := m.l.StoragePoolLookupByName(m.pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
 	}
 
-	numVols, err := m.l.StoragePoolNumOfVolumes(sp)
+	vols, _, err := m.l.StoragePoolListAllVolumes(sp, 1, 0)
 	if err != nil {
 		return nil, err
 	}
-	vols, _, err := m.l.StoragePoolListAllVolumes(sp, numVols, 0)
-	if err != nil {
-		return nil, err
-	}
+
 	for _, vol := range vols {
 		volNames = append(volNames, vol.Name)
 	}
+
 	sort.Strings(volNames)
 	return volNames, nil
 }

@@ -108,12 +108,8 @@ func (m *LibvirtManager) Shutdown(name string, force bool) error {
 
 func (m *LibvirtManager) List() ([]string, error) {
 	var domNames = []string{}
-	numDomains, err := m.l.ConnectNumOfDomains()
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(numDomains)
-	domains, _, err := m.l.ConnectListAllDomains(numDomains, 0)
+	// TODO: not sure why first paramater has to be 1
+	domains, _, err := m.l.ConnectListAllDomains(1, 0)
 	if err != nil {
 		return nil, err
 	}
