@@ -57,14 +57,12 @@ func newConfigShowCmd() *cobra.Command {
 
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey))
 			cfgOut, err := cfg.String()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			fmt.Println(cfgOut)
 		},
@@ -91,14 +89,12 @@ func newConfigWriteCmd() *cobra.Command {
 
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey))
 			err = cfg.WriteToDir(dest)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 		},
 	}

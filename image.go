@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -37,8 +36,7 @@ func newImageGetCmd() *cobra.Command {
 
 			err := mgr.CreateBaseImage(name, url)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 		},
 	}
@@ -53,8 +51,7 @@ func newImageListCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			images, err := mgr.ImageList()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			for _, image := range images {
 				fmt.Println(image)
@@ -74,8 +71,7 @@ func newImageRemoveCmd() *cobra.Command {
 			name = args[0]
 			err := mgr.ImageRemove(name)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 		},
 	}

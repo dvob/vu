@@ -24,8 +24,7 @@ func newRootCmd() *cobra.Command {
 			var err error
 			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectURL)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 		},
 		BashCompletionFunction: bash_completion_func,
@@ -62,8 +61,7 @@ func newCompletionCmd() *cobra.Command {
 			case "zsh":
 				newRootCmd().GenZshCompletion(os.Stdout)
 			default:
-				fmt.Println("unknown shell")
-				os.Exit(1)
+				errExit("unknown shell")
 			}
 		},
 	}

@@ -55,17 +55,25 @@ func NewDefaultVMConfig(name, baseImage string) *VMConfig {
 }
 
 func (m *LibvirtManager) Create(name string, vmCfg *VMConfig, cloudCfg *cloudinit.Config) error {
-	_, err := m.cloneBaseImage(name, vmCfg.BaseImageVolume)
+	mainVol, err := m.cloneBaseImage(name, vmCfg.BaseImageVolume)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.createConfigVolume(vmCfg.ConfigVolume, cloudCfg)
+	configVol, err := m.createConfigVolume(vmCfg.ConfigVolume, cloudCfg)
 	if err != nil {
+		m.l.StorageVolDelete(*mainVol, 0)
 		return err
 	}
 
-	return m.createVM(name, vmCfg)
+	err = m.createVM(name, vmCfg)
+	if err != nil {
+		m.l.StorageVolDelete(*mainVol, 0)
+		m.l.StorageVolDelete(*configVol, 0)
+		return err
+	}
+	return nil
+
 }
 
 // Remove removes the domain and its volumes

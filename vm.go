@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/dsbrng25b/cis/internal/cloud-init"
 	"github.com/dsbrng25b/cis/internal/virt"
@@ -40,15 +39,13 @@ func newCreateCmd() *cobra.Command {
 
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey))
 
 			err = mgr.Create(name, vmCfg, cloudCfg)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 
 		},
@@ -75,8 +72,7 @@ func newRemoveCmd() *cobra.Command {
 
 			err := mgr.Remove(name)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 
 		},
@@ -97,8 +93,7 @@ func newStartCmd() *cobra.Command {
 
 			err := mgr.Start(name)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 
 		},
@@ -114,8 +109,7 @@ func newListCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			vms, err := mgr.List()
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 			for _, vm := range vms {
 				fmt.Println(vm)
@@ -140,8 +134,7 @@ func newShutdownCmd() *cobra.Command {
 
 			err := mgr.Shutdown(name, force)
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				errExit(err)
 			}
 		},
 	}

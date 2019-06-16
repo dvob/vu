@@ -1,8 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/cloudfoundry/bytefmt"
 )
+
+func errExit(a ...interface{}) {
+	fmt.Fprintln(os.Stderr, a...)
+}
 
 // ByteSize implements the Value interface for flag parsing with pflag
 type ByteSize uint64
