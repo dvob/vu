@@ -165,8 +165,8 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 						Type: "qcow2",
 					},
 					Target: &libvirtxml.DomainDiskTarget{
-						Dev: "hda",
-						Bus: "ide",
+						Dev: "vda",
+						Bus: "virtio",
 					},
 					Source: &libvirtxml.DomainDiskSource{
 						File: &libvirtxml.DomainDiskSourceFile{
@@ -180,7 +180,7 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 						Type: "raw",
 					},
 					Target: &libvirtxml.DomainDiskTarget{
-						Dev: "hdb",
+						Dev: "vdb",
 						Bus: "ide",
 					},
 					Source: &libvirtxml.DomainDiskSource{
@@ -196,6 +196,9 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 						Network: &libvirtxml.DomainInterfaceSourceNetwork{
 							Network: cfg.Network,
 						},
+					},
+					Model: &libvirtxml.DomainInterfaceModel{
+						Type: "virtio",
 					},
 				},
 			},
