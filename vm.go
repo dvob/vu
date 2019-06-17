@@ -15,6 +15,7 @@ func newCreateCmd() *cobra.Command {
 		baseImage      string
 		user           string
 		sshAuthKeyFile string
+		passwordHash   string
 		vcpus          int
 		memory         ByteSize
 		network        string
@@ -45,7 +46,7 @@ func newCreateCmd() *cobra.Command {
 			if err != nil {
 				errExit(err)
 			}
-			cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey))
+			cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
 
 			err = mgr.Create(name, vmCfg, cloudCfg)
 			if err != nil {
@@ -58,6 +59,7 @@ func newCreateCmd() *cobra.Command {
 	cmd.Flags().Var(&diskSize, "disk-size", "size of the cloned image")
 	cmd.Flags().IntVar(&vcpus, "cpus", 1, "amount of cpus")
 	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
+	addPasswordHashOption(cmd.Flags(), &passwordHash)
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addSSHUserOption(cmd.Flags(), &user)
 	return cmd

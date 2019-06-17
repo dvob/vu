@@ -15,8 +15,9 @@ type Config struct {
 
 // NewDefaultConfig returns a default cloud config with hostname and instance id
 // set to name, one user with full sudo rights and a ssh key
-func NewDefaultConfig(name, user, sshAuthKey string) *Config {
-	return &Config{
+func NewDefaultConfig(name, user, sshAuthKey, password string) *Config {
+	var lockPasswd = true
+	c := &Config{
 		MetaData: MetaData{
 			Hostname:   name,
 			InstanceID: name,
@@ -30,10 +31,16 @@ func NewDefaultConfig(name, user, sshAuthKey string) *Config {
 					SSHAuthorizedKeys: []string{
 						sshAuthKey,
 					},
+					Passwd: password,
 				},
 			},
 		},
 	}
+	if password != "" {
+		lockPasswd = false
+		c.UserData.Users[0].LockPasswd = &lockPasswd
+	}
+	return c
 }
 
 func (c *Config) String() (string, error) {
@@ -76,7 +83,8 @@ func (md *MetaData) String() (string, error) {
 // UserData is a struct to render the user data of the cloud init configuration
 type UserData struct {
 	Hostname string
-	//Password string
+	//Password        string `yaml:"password,omitempty"`
+	//SSHPasswordAuth bool   `yaml:"ssh_pwauth,omitempty"`
 	Users []User `yaml:"users,omitempty"`
 }
 
@@ -90,6 +98,8 @@ type User struct {
 	Name              string   `yaml:"name"`
 	SSHAuthorizedKeys []string `yaml:"ssh-authorized-keys,omitempty"`
 	Sudo              string   `yaml:"sudo,omitempty"`
+	LockPasswd        *bool    `yaml:"lock_passwd,omitempty"`
+	Passwd            string   `yaml:"passwd,omitempty"`
 }
 
 // NetworkConfig definion of cloud init configuration
