@@ -7,8 +7,13 @@ import (
 	"github.com/cloudfoundry/bytefmt"
 )
 
-func errExit(a ...interface{}) {
-	fmt.Fprintln(os.Stderr, a...)
+func errPrint(e ...interface{}) {
+	fmt.Fprintln(os.Stderr, e...)
+}
+
+func errExit(e ...interface{}) {
+	errPrint(e...)
+	os.Exit(1)
 }
 
 // ByteSize implements the Value interface for flag parsing with pflag

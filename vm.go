@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/dsbrng25b/cis/internal/cloud-init"
 	"github.com/dsbrng25b/cis/internal/virt"
@@ -12,6 +13,7 @@ import (
 func newCreateCmd() *cobra.Command {
 	var (
 		name           string
+		names          []string
 		baseImage      string
 		user           string
 		sshAuthKeyFile string
@@ -27,12 +29,12 @@ func newCreateCmd() *cobra.Command {
 	// set default
 	_ = memory.Set("1024m")
 	cmd := &cobra.Command{
-		Use:   "create <name> <base_image>",
-		Short: "create a new VM from base image",
-		Args:  cobra.ExactArgs(2),
+		Use:   "create <base_image> <name>...",
+		Short: "create new VMs from base image",
+		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			baseImage = args[0]
-			name = args[1]
+			names = args[1:]
 
 			vmCfg = &virt.VMConfig{
 				BaseImageVolume: baseImage,
@@ -46,11 +48,18 @@ func newCreateCmd() *cobra.Command {
 			if err != nil {
 				errExit(err)
 			}
-			cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
 
-			err = mgr.Create(name, vmCfg, cloudCfg)
-			if err != nil {
-				errExit(err)
+			failed := false
+			for _, name = range names {
+				cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
+				err = mgr.Create(name, vmCfg, cloudCfg)
+				if err != nil {
+					failed = true
+					errPrint(name+":", err)
+				}
+			}
+			if failed {
+				os.Exit(1)
 			}
 
 		},
@@ -67,21 +76,28 @@ func newCreateCmd() *cobra.Command {
 
 func newRemoveCmd() *cobra.Command {
 	var (
-		name string
+		name  string
+		names []string
 	)
 	cmd := &cobra.Command{
-		Use:     "remove <name>",
-		Short:   "removes VM",
+		Use:     "remove <name>...",
+		Short:   "remove VMs",
 		Aliases: []string{"rm"},
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
+			names = args
 
-			err := mgr.Remove(name)
-			if err != nil {
-				errExit(err)
+			failed := false
+			for _, name = range names {
+				err := mgr.Remove(name)
+				if err != nil {
+					failed = true
+					errPrint(err)
+				}
 			}
-
+			if failed {
+				os.Exit(1)
+			}
 		},
 	}
 	return cmd
@@ -89,20 +105,27 @@ func newRemoveCmd() *cobra.Command {
 
 func newStartCmd() *cobra.Command {
 	var (
-		name string
+		name  string
+		names []string
 	)
 	cmd := &cobra.Command{
-		Use:   "start <name>",
-		Short: "starts VM",
-		Args:  cobra.ExactArgs(1),
+		Use:   "start <name>...",
+		Short: "starts VMs",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
+			names = args
 
-			err := mgr.Start(name)
-			if err != nil {
-				errExit(err)
+			failed := false
+			for _, name = range names {
+				err := mgr.Start(name)
+				if err != nil {
+					failed = true
+					errPrint(err)
+				}
 			}
-
+			if failed {
+				os.Exit(1)
+			}
 		},
 	}
 	return cmd
@@ -130,18 +153,26 @@ func newListCmd() *cobra.Command {
 func newShutdownCmd() *cobra.Command {
 	var (
 		name  string
+		names []string
 		force bool
 	)
 	cmd := &cobra.Command{
-		Use:   "shutdown <name>",
-		Short: "shutdown VM",
-		Args:  cobra.ExactArgs(1),
+		Use:   "shutdown <name>...",
+		Short: "shutdown VMs",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
+			names = args
 
-			err := mgr.Shutdown(name, force)
-			if err != nil {
-				errExit(err)
+			failed := false
+			for _, name = range names {
+				err := mgr.Shutdown(name, force)
+				if err != nil {
+					failed = true
+					errPrint(err)
+				}
+			}
+			if failed {
+				os.Exit(1)
 			}
 		},
 	}

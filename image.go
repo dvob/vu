@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -62,16 +63,27 @@ func newImageListCmd() *cobra.Command {
 }
 
 func newImageRemoveCmd() *cobra.Command {
-	var name string
+	var (
+		name   string
+		names  []string
+		failed bool
+	)
 	cmd := &cobra.Command{
-		Use:     "remove <name>",
-		Short:   "remove image",
+		Use:     "remove <name>...",
+		Short:   "remove images",
 		Aliases: []string{"rm"},
 		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
-			err := mgr.ImageRemove(name)
-			if err != nil {
-				errExit(err)
+			names = args
+
+			for _, name = range args {
+				err := mgr.ImageRemove(name)
+				if err != nil {
+					failed = true
+					errPrint(err)
+				}
+			}
+			if failed {
+				os.Exit(1)
 			}
 		},
 	}
