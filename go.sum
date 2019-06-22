@@ -11,6 +11,8 @@ github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwc
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8 h1:CiWhzkc1b4TGQAuhR69yFsQkPn6lbxeWFCMDjo3ushE=
 github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8/go.mod h1:PRcPVAAma6zcLpFd4GZrjR/MRpood3TamjKI2m/z/Uw=
+github.com/dsbrng25b/go-libvirt v0.0.0-20190622102043-e12e4db69e41 h1:KiQ61s+d79Ts6s7aDNxf001F/0e46VvTvO8IWoLOfc4=
+github.com/dsbrng25b/go-libvirt v0.0.0-20190622102043-e12e4db69e41/go.mod h1:xy5tloK/WnaRXXrWfi2BNHnuh56VBIBHZdEsF77XZYk=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
