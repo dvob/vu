@@ -132,12 +132,21 @@ func newStartCmd() *cobra.Command {
 }
 
 func newListCmd() *cobra.Command {
+	var (
+		all bool
+		vms []string
+		err error
+	)
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list VMs",
 		Aliases: []string{"ls"},
 		Run: func(cmd *cobra.Command, args []string) {
-			vms, err := mgr.List()
+			if all {
+				vms, err = mgr.ListAll()
+			} else {
+				vms, err = mgr.List()
+			}
 			if err != nil {
 				errExit(err)
 			}
@@ -147,6 +156,7 @@ func newListCmd() *cobra.Command {
 
 		},
 	}
+	cmd.Flags().BoolVarP(&all, "all", "a", false, "show also domains not created by cis")
 	return cmd
 }
 

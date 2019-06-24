@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/digitalocean/go-libvirt"
@@ -13,6 +14,7 @@ import (
 
 const configVolPrefix = "config_"
 const baseImagePrefix = "cis_base_"
+const descriptionPrefix = "created by cis"
 
 type LibvirtManager struct {
 	l    *libvirt.Libvirt
@@ -104,7 +106,7 @@ func (m *LibvirtManager) Shutdown(name string, force bool) error {
 	return m.l.DomainShutdown(dom)
 }
 
-func (m *LibvirtManager) List() ([]string, error) {
+func (m *LibvirtManager) ListAll() ([]string, error) {
 	var domNames = []string{}
 	// TODO: not sure why first paramater has to be 1
 	domains, _, err := m.l.ConnectListAllDomains(1, 0)
@@ -113,6 +115,27 @@ func (m *LibvirtManager) List() ([]string, error) {
 	}
 	for _, dom := range domains {
 		domNames = append(domNames, dom.Name)
+	}
+	sort.Strings(domNames)
+	return domNames, nil
+}
+
+func (m *LibvirtManager) List() ([]string, error) {
+	var domNames = []string{}
+	// TODO: not sure why first paramater has to be 1
+	domains, _, err := m.l.ConnectListAllDomains(1, 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, dom := range domains {
+		description, err := m.l.DomainGetMetadata(dom, 0, nil, 0)
+		if err != nil {
+			//TODO: explicitly check for metadata not available error
+			continue
+		}
+		if strings.HasPrefix(description, descriptionPrefix) {
+			domNames = append(domNames, dom.Name)
+		}
 	}
 	sort.Strings(domNames)
 	return domNames, nil
@@ -138,8 +161,9 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 	}
 
 	domain := &libvirtxml.Domain{
-		Name: name,
-		Type: "kvm",
+		Name:        name,
+		Type:        "kvm",
+		Description: descriptionPrefix,
 		Memory: &libvirtxml.DomainMemory{
 			Value: cfg.Memory,
 			Unit:  "b", //bytes
