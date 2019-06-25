@@ -3,29 +3,43 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/dsbrng25b/cis/internal/virt"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )
 
-var version = "n/a"
-var gitCommit = "n/a"
-var buildTime = "n/a"
+const envPrefix = "CIS_"
 
-var virStoragePool string
-var virConnectURL string
-var mgr *virt.LibvirtManager
+var (
+	version        = "n/a"
+	gitCommit      = "n/a"
+	buildTime      = "n/a"
+	virStoragePool string
+	virConnectURL  string
+	mgr            *virt.LibvirtManager
+)
 
 func newRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: "cis",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			var err error
+			// flags from environment
+			cmd.Flags().VisitAll(func(f *flag.Flag) {
+				varName := envPrefix + strings.ToUpper(f.Name)
+				if val, ok := os.LookupEnv(varName); !f.Changed && ok {
+					f.Value.Set(val)
+				}
+			})
+
+			// initialize libvirt manager
 			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectURL)
 			if err != nil {
 				errExit(err)
 			}
+
 		},
 		BashCompletionFunction: bash_completion_func,
 	}
