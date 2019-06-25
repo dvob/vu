@@ -52,18 +52,18 @@ func (c *Config) String() (string, error) {
 	)
 	meta, err = c.MetaData.String()
 	if err != nil {
-		fmt.Errorf("could not render meta data: %s", err)
+		return "", fmt.Errorf("could not render meta data: %s", err)
 	}
 
 	user, err = c.UserData.String()
 	if err != nil {
-		fmt.Errorf("could not render user data: %s", err)
+		return "", fmt.Errorf("could not render user data: %s", err)
 	}
 
 	if c.NetworkConfig != nil {
 		network, err = c.NetworkConfig.String()
 		if err != nil {
-			fmt.Errorf("could not render network config: %s", err)
+			return "", fmt.Errorf("could not render network config: %s", err)
 		}
 	}
 	return fmt.Sprintf("### meta-data ###\n%s\n### user-data ###\n%s\n### network-config ###\n%s\n", meta, user, network), nil

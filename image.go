@@ -75,7 +75,7 @@ func newImageRemoveCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			names = args
 
-			for _, name = range args {
+			for _, name = range names {
 				err := mgr.ImageRemove(name)
 				if err != nil {
 					failed = true
