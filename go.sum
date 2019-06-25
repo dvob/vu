@@ -2,15 +2,11 @@ code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c h1:VzwteSWGbW9m
 code.cloudfoundry.org/bytefmt v0.0.0-20180906201452-2aa6f33b730c/go.mod h1:wN/zk7mhREp/oviagqUXY3EwuHhWyOvAdsn5Y4CzOrc=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
-github.com/cloudfoundry/bytefmt v0.0.0-20180906201452-2aa6f33b730c h1:zE9z4EZZwJTjOi9Q9WYM/81BuwOKyjhHagiNUDhDdnI=
-github.com/cloudfoundry/bytefmt v0.0.0-20180906201452-2aa6f33b730c/go.mod h1:4oo6ExqTPaBVBwSm814h6UO5Fels1kN2KvpNscaCcS0=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8 h1:CiWhzkc1b4TGQAuhR69yFsQkPn6lbxeWFCMDjo3ushE=
-github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8/go.mod h1:PRcPVAAma6zcLpFd4GZrjR/MRpood3TamjKI2m/z/Uw=
 github.com/dsbrng25b/go-libvirt v0.0.0-20190622102043-e12e4db69e41 h1:KiQ61s+d79Ts6s7aDNxf001F/0e46VvTvO8IWoLOfc4=
 github.com/dsbrng25b/go-libvirt v0.0.0-20190622102043-e12e4db69e41/go.mod h1:xy5tloK/WnaRXXrWfi2BNHnuh56VBIBHZdEsF77XZYk=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
