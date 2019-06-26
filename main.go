@@ -14,8 +14,7 @@ const envPrefix = "CIS_"
 
 var (
 	version        = "n/a"
-	gitCommit      = "n/a"
-	buildTime      = "n/a"
+	commit         = "n/a"
 	virStoragePool string
 	virConnectURL  string
 	mgr            *virt.LibvirtManager
@@ -85,11 +84,10 @@ func newCompletionCmd() *cobra.Command {
 func newVersionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "show version and build information",
+		Short: "show version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("version:", version)
-			fmt.Println("commit:", gitCommit)
-			fmt.Println("build time:", buildTime)
+			fmt.Println("version", version)
+			fmt.Println("commit", commit)
 		},
 	}
 	return cmd
