@@ -29,7 +29,10 @@ func newRootCmd() *cobra.Command {
 			cmd.Flags().VisitAll(func(f *flag.Flag) {
 				varName := envPrefix + strings.ToUpper(f.Name)
 				if val, ok := os.LookupEnv(varName); !f.Changed && ok {
-					f.Value.Set(val)
+					err := f.Value.Set(val)
+					if err != nil {
+						errExit(err)
+					}
 				}
 			})
 
@@ -68,13 +71,17 @@ func newCompletionCmd() *cobra.Command {
 		Args:      cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			shell = args[0]
+			var err error
 			switch shell {
 			case "bash":
-				newRootCmd().GenBashCompletion(os.Stdout)
+				err = newRootCmd().GenBashCompletion(os.Stdout)
 			case "zsh":
-				newRootCmd().GenZshCompletion(os.Stdout)
+				err = newRootCmd().GenZshCompletion(os.Stdout)
 			default:
 				errExit("unknown shell")
+			}
+			if err != nil {
+				errExit(err)
 			}
 		},
 	}

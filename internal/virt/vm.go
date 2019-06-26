@@ -13,7 +13,6 @@ import (
 )
 
 const configVolPrefix = "config_"
-const baseImagePrefix = "cis_base_"
 const descriptionPrefix = "created by cis"
 
 type LibvirtManager struct {
@@ -54,14 +53,14 @@ func (m *LibvirtManager) Create(name string, vmCfg *VMConfig, cloudCfg *cloudini
 
 	configVol, err := m.createConfigVolume(configVolPrefix+name, cloudCfg)
 	if err != nil {
-		m.l.StorageVolDelete(*mainVol, 0)
+		m.l.StorageVolDelete(*mainVol, 0) //nolint:errcheck
 		return err
 	}
 
 	err = m.createVM(name, vmCfg)
 	if err != nil {
-		m.l.StorageVolDelete(*mainVol, 0)
-		m.l.StorageVolDelete(*configVol, 0)
+		m.l.StorageVolDelete(*mainVol, 0)   //nolint:errcheck
+		m.l.StorageVolDelete(*configVol, 0) //nolint:errcheck
 		return err
 	}
 	return nil

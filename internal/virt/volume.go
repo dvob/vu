@@ -162,7 +162,7 @@ func (m *LibvirtManager) createVolume(name string, size uint64, stream io.Reader
 	err = m.l.StorageVolUpload(sv, stream, 0, 0, 0)
 	if err != nil {
 		// try undo
-		m.l.StorageVolDelete(sv, 0)
+		m.l.StorageVolDelete(sv, 0) //nolint:errcheck
 		return nil, fmt.Errorf("failed to upload content: %s", err)
 	}
 	return &sv, nil

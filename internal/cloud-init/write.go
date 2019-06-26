@@ -96,6 +96,9 @@ func (c *Config) CreateISO() ([]byte, error) {
 	// use LimitReader since later we use ReadAll which could easily lead to out of memory
 	var reader io.Reader
 	reader, err = cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
 	reader = io.LimitReader(reader, int64(maxIsoSize+1))
 
 	err = cmd.Start()
