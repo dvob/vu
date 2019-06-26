@@ -1,0 +1,22 @@
+language: go
+
+go:
+- "1.12.x"
+
+before_install:
+- make setup-lint
+
+script:
+- make lint
+- make test
+- make build
+
+deploy:
+  provider: releases
+  file:
+  - cis
+  skip_cleanup: true
+  on:
+    tags: true
+  api_key:
+    secure: ZNZzjaTVPt+En/6gR5R7tigEaxK2NNM5iPn6sgONWrfo5n+vtarlE+MugXPEIBgGDALy38GaDRcYSSBSbRl7re12jTDGgRxeJpX3dOVBQtT3y2jl7SxM2PTiyTkaNkxl0ZrmVBu6NCpBV6UNkqaNyuUydo9cdqqTmvd3ASIkm6fL4bXeVqAnVe/9SR438PrpQr3xznxQVVEW+IY2aO3mFg53loRNhy3oNLbC64Pv2A+tlm71rdQKiCtHuGeRMdATtdNf4eP0Iuzpvu8XTxZZP+Mq6Hekj0xG8NhU3WAqZgZND9NLwpJIXlajW4zgzzk/gYrtkuztmnNN1MA1nLvWQhkeXVVuZAhbuGxFjsDVyr6lLtF6rB2AiUe72KQeTCqzG7V9SMBu1a2olswu8dkE1nMx7nmXW0NsGOtWbwSzz/TrXdFUA7uThQgsp1xFliZX7nvHthNjV9ISzEjVADZF/fTcmIQfMvxYAcr+J5imnWK4wU6dsQnqvUFDjBaR6EMmjpndA3BNYdpC9bsWxsOnzkD6fvDyyWXsYJxDHFLZDbZ0umnEhbvVMQCuMdaZ+wgeOy0vFwad4amVMIz2gLEB8VsnSz0056AsZUAyas2+zpEKfkCydq0Xx+qfZ8SVz124um3iRH+XFtUcSEJjD3tRcUVcL7aFjaQqaTrummkfQiw=
