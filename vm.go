@@ -26,6 +26,7 @@ func newCreateCmd() *cobra.Command {
 		network        string
 		cloudCfg       *cloudinit.Config
 		configDir      []string
+		networkParams  = &cloudinit.NetworkParameter{}
 		diskSize       ByteSize
 	)
 
@@ -67,7 +68,7 @@ func newCreateCmd() *cobra.Command {
 				if len(configDir) > 0 {
 					iso, err = cloudinit.CreateISOFromDir(configDir[i%len(configDir)])
 				} else {
-					cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
+					cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash, networkParams)
 					iso, err = cloudCfg.CreateISO()
 				}
 				if err != nil {
@@ -109,6 +110,7 @@ func newCreateCmd() *cobra.Command {
 	addPasswordHashOption(cmd.Flags(), &passwordHash)
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addSSHUserOption(cmd.Flags(), &user)
+	addNetworkOptions(cmd.Flags(), networkParams)
 	return cmd
 }
 
@@ -186,6 +188,7 @@ func newListCmd() *cobra.Command {
 		Short:   "list VMs",
 		Aliases: []string{"ls"},
 		Run: func(cmd *cobra.Command, args []string) {
+			mgr.ListAllDetail()
 			if all {
 				vms, err = mgr.ListAll()
 			} else {

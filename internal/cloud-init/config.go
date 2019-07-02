@@ -15,7 +15,7 @@ type Config struct {
 
 // NewDefaultConfig returns a default cloud config with hostname and instance id
 // set to name, one user with full sudo rights and a ssh key
-func NewDefaultConfig(name, user, sshAuthKey, password string) *Config {
+func NewDefaultConfig(name, user, sshAuthKey, password string, networkParams *NetworkParameter) *Config {
 	var lockPasswd = true
 	c := &Config{
 		MetaData: MetaData{
@@ -36,6 +36,11 @@ func NewDefaultConfig(name, user, sshAuthKey, password string) *Config {
 			},
 		},
 	}
+	nc, err := NewNetworkConfig(networkParams)
+	if err != nil {
+		fmt.Println("network config failed")
+	}
+	c.NetworkConfig = nc
 	if password != "" {
 		lockPasswd = false
 		c.UserData.Users[0].LockPasswd = &lockPasswd
@@ -100,11 +105,4 @@ type User struct {
 	Sudo              string   `yaml:"sudo,omitempty"`
 	LockPasswd        *bool    `yaml:"lock_passwd,omitempty"`
 	Passwd            string   `yaml:"passwd,omitempty"`
-}
-
-// NetworkConfig definion of cloud init configuration
-type NetworkConfig struct{}
-
-func (nc *NetworkConfig) String() (string, error) {
-	return "", nil
 }

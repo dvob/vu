@@ -30,6 +30,12 @@ func addSSHAuthKeyOption(fs *flag.FlagSet, dest *string) {
 	fs.StringVar(dest, "ssh-auth-key", path, "ssh public key to use")
 }
 
+func addNetworkOptions(fs *flag.FlagSet, np *cloudinit.NetworkParameter) {
+	fs.StringVar(&np.Address, "ip", "", "configure static IPv4 address insted of DHCP. address has to be specified in CIDR notation.")
+	fs.StringVar(&np.Gateway, "gateway", "", "the default IPv4 gateway. if no gateway is configured the lowest IP")
+	fs.StringSliceVar(&np.Nameserver, "nameserver", []string{}, "configure the dns server address. if no address is configured the default gateway is used.")
+}
+
 func addPasswordHashOption(fs *flag.FlagSet, dest *string) {
 	fs.StringVar(dest, "password-hash", "", "Password hash to login without SSH over console. The hash can be generated with openssl passwd.")
 }
@@ -52,6 +58,7 @@ func newConfigShowCmd() *cobra.Command {
 		user           string
 		sshAuthKeyFile string
 		passwordHash   string
+		networkParams  = &cloudinit.NetworkParameter{}
 	)
 	cmd := &cobra.Command{
 		Use:   "show <name>",
@@ -64,7 +71,11 @@ func newConfigShowCmd() *cobra.Command {
 			if err != nil {
 				errExit(err)
 			}
-			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
+			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash, networkParams)
+			if err != nil {
+				errExit(err)
+			}
+
 			cfgOut, err := cfg.String()
 			if err != nil {
 				errExit(err)
@@ -75,6 +86,7 @@ func newConfigShowCmd() *cobra.Command {
 	addSSHUserOption(cmd.Flags(), &user)
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addPasswordHashOption(cmd.Flags(), &passwordHash)
+	addNetworkOptions(cmd.Flags(), networkParams)
 	return cmd
 }
 
@@ -84,6 +96,7 @@ func newConfigWriteCmd() *cobra.Command {
 		user           string
 		sshAuthKeyFile string
 		passwordHash   string
+		networkParams  = &cloudinit.NetworkParameter{}
 		dest           string
 	)
 	cmd := &cobra.Command{
@@ -98,7 +111,7 @@ func newConfigWriteCmd() *cobra.Command {
 			if err != nil {
 				errExit(err)
 			}
-			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
+			cfg := cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash, networkParams)
 			err = cfg.WriteToDir(dest)
 			if err != nil {
 				errExit(err)
@@ -108,5 +121,6 @@ func newConfigWriteCmd() *cobra.Command {
 	addSSHUserOption(cmd.Flags(), &user)
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addPasswordHashOption(cmd.Flags(), &passwordHash)
+	addNetworkOptions(cmd.Flags(), networkParams)
 	return cmd
 }

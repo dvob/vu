@@ -28,6 +28,12 @@ type VMConfig struct {
 	DiskSize        uint64
 }
 
+type VMState struct {
+	Name      string
+	State     string
+	IPAddress string
+}
+
 func NewLibvirtManager(pool string, uri string) (*LibvirtManager, error) {
 	parts := strings.SplitN(uri, ":", 2)
 
@@ -110,6 +116,26 @@ func (m *LibvirtManager) Shutdown(name string, force bool) error {
 		return m.l.DomainDestroy(dom)
 	}
 	return m.l.DomainShutdown(dom)
+}
+
+func (m *LibvirtManager) ListAllDetail() {
+	domains, _, err := m.l.ConnectListAllDomains(1, 0)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, dom := range domains {
+		fmt.Println("##", dom.Name, "##")
+		ifaces, err := m.l.DomainInterfaceAddresses(dom, 2, 0)
+		if err != nil {
+			fmt.Println(err)
+		}
+		for _, iface := range ifaces {
+			fmt.Printf("    %#v\n", iface)
+			//fmt.Printf("    name=%s, hwaddr=%s, Addrs=%s", iface.Name
+		}
+	}
+	return
 }
 
 func (m *LibvirtManager) ListAll() ([]string, error) {
