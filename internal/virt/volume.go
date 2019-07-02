@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"sort"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/dsbrng25b/cis/internal/cloud-init"
 	"github.com/libvirt/libvirt-go-xml"
 	"gopkg.in/cheggaaa/pb.v1"
 )
+
+const maxIsoSize = 10000000 // 10MB
 
 func (m *LibvirtManager) ImageList() ([]string, error) {
 	var volNames = []string{}
@@ -101,7 +103,7 @@ func (m *LibvirtManager) CreateBaseImage(name string, src string) error {
 }
 
 func (m *LibvirtManager) ImageRemove(name string) error {
-	return m.removeVolume(name)
+	return m.RemoveVolume(name)
 }
 
 func (m *LibvirtManager) GetVolume(name string) (*libvirt.StorageVol, error) {
@@ -113,7 +115,7 @@ func (m *LibvirtManager) GetVolume(name string) (*libvirt.StorageVol, error) {
 	return &vol, err
 }
 
-func (m *LibvirtManager) removeVolume(name string) error {
+func (m *LibvirtManager) RemoveVolume(name string) error {
 	sp, err := m.l.StoragePoolLookupByName(m.pool)
 	if err != nil {
 		return fmt.Errorf("faild to get storage pool: %s", err)
@@ -126,8 +128,23 @@ func (m *LibvirtManager) removeVolume(name string) error {
 	return err
 }
 
-func (m *LibvirtManager) createIsoVolume(name string, size uint64, stream io.Reader) (*libvirt.StorageVol, error) {
-	return m.createVolume(name, size, stream, "iso")
+// CreateISOVolume is intended to create ISO which contains a cloud init config. Since libvirt needs to know the size of the volume in advance, we first have to read the whole content into memory.
+func (m *LibvirtManager) CreateISOVolume(name string, r io.Reader) (*libvirt.StorageVol, error) {
+
+	// to determine if we hit the limit we consume limit + 1 and check if if more
+	// bytes then the limit are read
+	r = io.LimitReader(r, int64(maxIsoSize+1))
+
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) > maxIsoSize {
+		return nil, fmt.Errorf("ISO is bigger than 10MB")
+	}
+
+	return m.createVolume(name, uint64(len(data)), bytes.NewReader(data), "iso")
 }
 
 func (m *LibvirtManager) createVolume(name string, size uint64, stream io.Reader, kind string) (*libvirt.StorageVol, error) {
@@ -166,18 +183,6 @@ func (m *LibvirtManager) createVolume(name string, size uint64, stream io.Reader
 		return nil, fmt.Errorf("failed to upload content: %s", err)
 	}
 	return &sv, nil
-}
-
-func (m *LibvirtManager) createConfigVolume(name string, cfg *cloudinit.Config) (*libvirt.StorageVol, error) {
-	data, err := cfg.CreateISO()
-	if err != nil {
-		return nil, err
-	}
-	vol, err := m.createIsoVolume(name, uint64(len(data)), bytes.NewReader(data))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create config iso: %s", err)
-	}
-	return vol, nil
 }
 
 // cloneBaseImage creates a clone from baseImage. baseImage has to be a qcow2 image.

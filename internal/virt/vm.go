@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"github.com/digitalocean/go-libvirt"
-	"github.com/dsbrng25b/cis/internal/cloud-init"
 	"github.com/libvirt/libvirt-go-xml"
 )
 
-const configVolPrefix = "config_"
 const descriptionPrefix = "created by cis"
 
 type LibvirtManager struct {
@@ -21,10 +19,12 @@ type LibvirtManager struct {
 }
 
 type VMConfig struct {
+	Name            string
 	Memory          uint
 	VCPU            int
 	Network         string
 	BaseImageVolume string
+	ISOImageVolume  string
 	DiskSize        uint64
 }
 
@@ -45,22 +45,19 @@ func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
 	}, nil
 }
 
-func (m *LibvirtManager) Create(name string, vmCfg *VMConfig, cloudCfg *cloudinit.Config) error {
-	mainVol, err := m.cloneBaseImage(name, vmCfg.BaseImageVolume, vmCfg.DiskSize)
+// Create creates a VM from vmCfg
+// First it clones the base image configured in vmCfg to the name of the VM and
+// then it tries to create the VM itself. If the creation of the VM fails it
+// tries to remove the cloned image as well.
+func (m *LibvirtManager) Create(vmCfg *VMConfig) error {
+	mainVol, err := m.cloneBaseImage(vmCfg.Name, vmCfg.BaseImageVolume, vmCfg.DiskSize)
 	if err != nil {
 		return err
 	}
 
-	configVol, err := m.createConfigVolume(configVolPrefix+name, cloudCfg)
+	err = m.createVM(vmCfg)
 	if err != nil {
 		m.l.StorageVolDelete(*mainVol, 0) //nolint:errcheck
-		return err
-	}
-
-	err = m.createVM(name, vmCfg)
-	if err != nil {
-		m.l.StorageVolDelete(*mainVol, 0)   //nolint:errcheck
-		m.l.StorageVolDelete(*configVol, 0) //nolint:errcheck
 		return err
 	}
 	return nil
@@ -73,11 +70,7 @@ func (m *LibvirtManager) Remove(name string) error {
 	if err != nil {
 		return err
 	}
-	err = m.removeVolume(name)
-	if err != nil {
-		return err
-	}
-	err = m.removeVolume(configVolPrefix + name)
+	err = m.RemoveVolume(name)
 	if err != nil {
 		return err
 	}
@@ -140,8 +133,8 @@ func (m *LibvirtManager) List() ([]string, error) {
 	return domNames, nil
 }
 
-func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
-	image, err := m.GetVolume(name)
+func (m *LibvirtManager) createVM(cfg *VMConfig) error {
+	image, err := m.GetVolume(cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -150,17 +143,19 @@ func (m *LibvirtManager) createVM(name string, cfg *VMConfig) error {
 	if err != nil {
 		return err
 	}
-	configVol, err := m.GetVolume(configVolPrefix + name)
+
+	configVol, err := m.GetVolume(cfg.ISOImageVolume)
 	if err != nil {
 		return err
 	}
+
 	configPath, err := m.l.StorageVolGetPath(*configVol)
 	if err != nil {
 		return err
 	}
 
 	domain := &libvirtxml.Domain{
-		Name:        name,
+		Name:        cfg.Name,
 		Type:        "kvm",
 		Description: descriptionPrefix,
 		Memory: &libvirtxml.DomainMemory{

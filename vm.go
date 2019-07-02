@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/dsbrng25b/cis/internal/virt"
 	"github.com/spf13/cobra"
 )
+
+const configVolumePrefix = "cis_config_"
 
 func newCreateCmd() *cobra.Command {
 	var (
@@ -21,8 +24,8 @@ func newCreateCmd() *cobra.Command {
 		vcpus          int
 		memory         ByteSize
 		network        string
-		vmCfg          *virt.VMConfig
 		cloudCfg       *cloudinit.Config
+		configDir      []string
 		diskSize       ByteSize
 	)
 
@@ -36,23 +39,57 @@ func newCreateCmd() *cobra.Command {
 			baseImage = args[0]
 			names = args[1:]
 
-			vmCfg = &virt.VMConfig{
-				BaseImageVolume: baseImage,
-				Memory:          uint(memory),
-				VCPU:            vcpus,
-				Network:         network,
-				DiskSize:        uint64(diskSize),
-			}
-
 			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
 			if err != nil {
 				errExit(err)
 			}
 
-			failed := false
-			for _, name = range names {
-				cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
-				err = mgr.Create(name, vmCfg, cloudCfg)
+			if len(configDir) > 0 {
+				for _, dir := range configDir {
+					fi, err := os.Stat(dir)
+					if err != nil {
+						errExit(err)
+					}
+					if !fi.IsDir() {
+						errExit(dir, "is not a directory")
+					}
+				}
+			}
+
+			var failed = false
+			var i int
+
+			for i, name = range names {
+
+				var iso io.Reader
+				var configVolumeName = configVolumePrefix + name
+
+				if len(configDir) > 0 {
+					iso, err = cloudinit.CreateISOFromDir(configDir[i%len(configDir)])
+				} else {
+					cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash)
+					iso, err = cloudCfg.CreateISO()
+				}
+				if err != nil {
+					errExit("failed to create config iso:", err)
+				}
+
+				_, err := mgr.CreateISOVolume(configVolumeName, iso)
+				if err != nil {
+					errExit("failed to create config volume:", err)
+				}
+
+				vmCfg := &virt.VMConfig{
+					Name:            name,
+					BaseImageVolume: baseImage,
+					ISOImageVolume:  configVolumeName,
+					Memory:          uint(memory),
+					VCPU:            vcpus,
+					Network:         network,
+					DiskSize:        uint64(diskSize),
+				}
+
+				err = mgr.Create(vmCfg)
 				if err != nil {
 					failed = true
 					errPrint(name+":", err)
@@ -68,6 +105,7 @@ func newCreateCmd() *cobra.Command {
 	cmd.Flags().Var(&diskSize, "disk-size", "size of the cloned image")
 	cmd.Flags().IntVar(&vcpus, "cpus", 1, "amount of cpus")
 	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
+	cmd.Flags().StringSliceVar(&configDir, "dir", []string{}, "use cloud init config from directory. if you start multiple VMs simultaneously you can provide multiple directories")
 	addPasswordHashOption(cmd.Flags(), &passwordHash)
 	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
 	addSSHUserOption(cmd.Flags(), &user)
@@ -90,6 +128,12 @@ func newRemoveCmd() *cobra.Command {
 			failed := false
 			for _, name = range names {
 				err := mgr.Remove(name)
+				if err != nil {
+					failed = true
+					errPrint(err)
+				}
+
+				err = mgr.RemoveVolume(configVolumePrefix + name)
 				if err != nil {
 					failed = true
 					errPrint(err)
