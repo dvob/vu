@@ -14,6 +14,41 @@ var metaFileName = "meta-data"
 var userFileName = "user-data"
 var networkFileName = "network-config"
 
+// CmdReader implements a io.Reader which return errors of the command execution. Stderr is redirected to
+type CmdReader struct {
+	cmd    *exec.Cmd
+	stdout io.ReadCloser
+}
+
+func NewCmdReader(cmd *exec.Cmd) (*CmdReader, error) {
+	cmd.Stderr = os.Stderr
+	reader, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	return &CmdReader{
+		cmd:    cmd,
+		stdout: reader,
+	}, nil
+}
+
+// Read reads on stdout. If io.EOF is returned it checks if the command ended
+// successfully and if not it returns that error insted of io.EOF
+func (cr *CmdReader) Read(p []byte) (n int, err error) {
+	n, err = cr.stdout.Read(p)
+	if err == io.EOF {
+		err1 := cr.cmd.Wait()
+		if err1 != nil {
+			return n, err1
+		}
+	}
+	return
+}
+
+func (cr *CmdReader) Close() error {
+	return cr.stdout.Close()
+}
+
 // Creates a ISO Image from a directory
 func CreateISOFromDir(dir string) (io.ReadCloser, error) {
 	cmdArgs := []string{
@@ -26,7 +61,7 @@ func CreateISOFromDir(dir string) (io.ReadCloser, error) {
 
 	cmd := exec.Command(isoCmd, cmdArgs...)
 
-	r, err := cmd.StdoutPipe()
+	r, err := NewCmdReader(cmd)
 	if err != nil {
 		return nil, err
 	}
