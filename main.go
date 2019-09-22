@@ -16,11 +16,13 @@ var (
 	version        = "n/a"
 	commit         = "n/a"
 	virStoragePool string
-	virConnectURL  string
 	mgr            *virt.LibvirtManager
 )
 
 func newRootCmd() *cobra.Command {
+	var (
+		uri string
+	)
 	rootCmd := &cobra.Command{
 		Use: "cis",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -37,14 +39,21 @@ func newRootCmd() *cobra.Command {
 			})
 
 			// initialize libvirt manager
-			mgr, err = virt.NewLibvirtManager(virStoragePool, virConnectURL)
+			mgr, err = virt.NewLibvirtManager(virStoragePool, uri)
 			if err != nil {
 				errExit(err)
 			}
-
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			err := mgr.Close()
+			if err != nil {
+				errExit(err)
+			}
 		},
 		BashCompletionFunction: bash_completion_func,
 	}
+
+	rootCmd.PersistentFlags().StringVar(&uri, "uri", "unix:/var/run/libvirt/libvirt-sock", "Connection url for libvirtd. e.g. tcp:localhost:16509")
 	rootCmd.AddCommand(
 		newConfigCmd(),
 		newImageCmd(),

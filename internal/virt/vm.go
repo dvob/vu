@@ -28,10 +28,19 @@ type VMConfig struct {
 	DiskSize        uint64
 }
 
-func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
-	c, err := net.DialTimeout("unix", "/var/run/libvirt/libvirt-sock", 2*time.Second)
+func NewLibvirtManager(pool string, uri string) (*LibvirtManager, error) {
+	parts := strings.SplitN(uri, ":", 2)
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid connection uri '%s'", uri)
+	}
+
+	network := parts[0]
+	address := parts[1]
+
+	c, err := net.DialTimeout(network, address, 2*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to libvirt sock: %s", err)
+		return nil, fmt.Errorf("failed to connect to libvirtd: %s", err)
 	}
 
 	l := libvirt.New(c)
@@ -43,6 +52,11 @@ func NewLibvirtManager(pool string, network string) (*LibvirtManager, error) {
 		l,
 		pool,
 	}, nil
+}
+
+// Close closes the connection to libvirt
+func (m *LibvirtManager) Close() error {
+	return m.l.Disconnect()
 }
 
 // Create creates a VM from vmCfg
