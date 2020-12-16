@@ -1,0 +1,19 @@
+project_name: vu
+builds:
+- ldflags:
+  - -s -w
+  - -X main.version=v{{.Version}}
+  - -X main.commit={{.Commit}}
+  goos:
+  - linux
+  - darwin
+  - openbsd
+  - freebsd
+  - windows
+archives:
+- name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+  format: binary
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
