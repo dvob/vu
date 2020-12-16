@@ -11,6 +11,12 @@ vu image ls
 # create new VM
 vu create mytest1
 
+# list VMs
+vu list
+
 # connect to vm
 ssh mytest1
+
+# remove VM
+vu rm mytest1
 ```
