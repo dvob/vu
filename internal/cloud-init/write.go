@@ -9,7 +9,7 @@ import (
 )
 
 var isoCmd = "mkisofs"
-var tmpPrefix = "cis_iso"
+var tmpPrefix = "vu_iso"
 var metaFileName = "meta-data"
 var userFileName = "user-data"
 var networkFileName = "network-config"

@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dsbrng25b/cis/internal/cloud-init"
-	"github.com/dsbrng25b/cis/internal/virt"
+	"github.com/dsbrng25b/vu/internal/cloud-init"
+	"github.com/dsbrng25b/vu/internal/virt"
 	"github.com/spf13/cobra"
 )
 
-const configVolumePrefix = "cis_config_"
+const configVolumePrefix = "vu_config_"
 
 func newCreateCmd() *cobra.Command {
 	var (
@@ -21,7 +21,7 @@ func newCreateCmd() *cobra.Command {
 		user           string
 		sshAuthKeyFile string
 		passwordHash   string
-		vcpus          int
+		vcpus          uint
 		memory         ByteSize
 		network        string
 		cloudCfg       *cloudinit.Config
@@ -103,7 +103,7 @@ func newCreateCmd() *cobra.Command {
 	}
 	cmd.Flags().Var(&memory, "memory", "amount of memory")
 	cmd.Flags().Var(&diskSize, "disk-size", "size of the cloned image")
-	cmd.Flags().IntVar(&vcpus, "cpus", 1, "amount of cpus")
+	cmd.Flags().UintVar(&vcpus, "cpus", 1, "amount of cpus")
 	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
 	cmd.Flags().StringSliceVar(&configDir, "dir", []string{}, "use cloud init config from directory. if you start multiple VMs simultaneously you can provide multiple directories")
 	addPasswordHashOption(cmd.Flags(), &passwordHash)
@@ -200,7 +200,7 @@ func newListCmd() *cobra.Command {
 
 		},
 	}
-	cmd.Flags().BoolVarP(&all, "all", "a", false, "show also domains not created by cis")
+	cmd.Flags().BoolVarP(&all, "all", "a", false, "show also domains not created by vu")
 	return cmd
 }
 

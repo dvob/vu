@@ -11,7 +11,7 @@ import (
 	"github.com/libvirt/libvirt-go-xml"
 )
 
-const descriptionPrefix = "created by cis"
+const descriptionPrefix = "created by vu"
 
 type LibvirtManager struct {
 	l    *libvirt.Libvirt
@@ -21,7 +21,7 @@ type LibvirtManager struct {
 type VMConfig struct {
 	Name            string
 	Memory          uint
-	VCPU            int
+	VCPU            uint
 	Network         string
 	BaseImageVolume string
 	ISOImageVolume  string

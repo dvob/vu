@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dsbrng25b/cis/internal/virt"
+	"github.com/dsbrng25b/vu/internal/virt"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )
@@ -24,7 +24,7 @@ func newRootCmd() *cobra.Command {
 		uri string
 	)
 	rootCmd := &cobra.Command{
-		Use: "cis",
+		Use: "vu",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			var err error
 			// flags from environment
@@ -50,7 +50,6 @@ func newRootCmd() *cobra.Command {
 				errExit(err)
 			}
 		},
-		BashCompletionFunction: bash_completion_func,
 	}
 
 	rootCmd.PersistentFlags().StringVar(&uri, "uri", "unix:/var/run/libvirt/libvirt-sock", "Connection url for libvirtd. e.g. tcp:localhost:16509")
