@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dsbrng25b/vu/internal/virt"
+	"github.com/dvob/vu/internal/virt"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )

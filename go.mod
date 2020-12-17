@@ -1,4 +1,4 @@
-module github.com/dsbrng25b/vu
+module github.com/dvob/vu
 
 go 1.15
 
