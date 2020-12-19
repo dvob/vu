@@ -15,7 +15,7 @@ type Config struct {
 
 // NewDefaultConfig returns a default cloud config with hostname and instance id
 // set to name, one user with full sudo rights and a ssh key
-func NewDefaultConfig(name, user, sshAuthKey, password string, networkParams *NetworkParameter) *Config {
+func NewDefaultConfig(name, user, sshAuthKey, password string, networkParams *NetworkParameter) (*Config, error) {
 	var lockPasswd = true
 	c := &Config{
 		MetaData: MetaData{
@@ -38,14 +38,14 @@ func NewDefaultConfig(name, user, sshAuthKey, password string, networkParams *Ne
 	}
 	nc, err := NewNetworkConfig(networkParams)
 	if err != nil {
-		fmt.Println("network config failed")
+		return nil, fmt.Errorf("network config failed: %w", err)
 	}
 	c.NetworkConfig = nc
 	if password != "" {
 		lockPasswd = false
 		c.UserData.Users[0].LockPasswd = &lockPasswd
 	}
-	return c
+	return c, nil
 }
 
 func (c *Config) String() (string, error) {

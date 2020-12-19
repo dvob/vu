@@ -1,6 +1,7 @@
 package cloudinit
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 	"os"
@@ -91,7 +92,7 @@ func (c *Config) WriteToDir(dir string) error {
 	}
 
 	if c.NetworkConfig != nil {
-		network, err = c.UserData.String()
+		network, err = c.NetworkConfig.String()
 		if err != nil {
 			return err
 		}
@@ -125,11 +126,23 @@ func (c *Config) CreateISO() (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer os.RemoveAll(tmp)
 
 	err = c.WriteToDir(tmp)
 	if err != nil {
 		return nil, err
 	}
-	return CreateISOFromDir(tmp)
+	buf := &bytes.Buffer{}
+	isoReader, err := CreateISOFromDir(tmp)
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(buf, isoReader)
+	if err != nil {
+		return nil, err
+	}
+	err = os.RemoveAll(tmp)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.NopCloser(buf), nil
 }

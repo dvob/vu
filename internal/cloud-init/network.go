@@ -48,6 +48,10 @@ func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {
 		nameserver = []string{}
 	)
 
+	if np.Address == "" {
+		return nil, nil
+	}
+
 	_, ipNet, err := net.ParseCIDR(np.Address)
 	if err != nil {
 		return nil, err

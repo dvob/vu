@@ -118,24 +118,23 @@ func (m *LibvirtManager) Shutdown(name string, force bool) error {
 	return m.l.DomainShutdown(dom)
 }
 
-func (m *LibvirtManager) ListAllDetail() {
+func (m *LibvirtManager) ListAllDetail() error {
 	domains, _, err := m.l.ConnectListAllDomains(1, 0)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 	for _, dom := range domains {
-		fmt.Println("##", dom.Name, "##")
 		ifaces, err := m.l.DomainInterfaceAddresses(dom, 2, 0)
 		if err != nil {
-			fmt.Println(err)
+			return fmt.Errorf("failed to get domain interface address for %s: %w", dom.Name, err)
 		}
+		fmt.Println(dom.Name)
 		for _, iface := range ifaces {
 			fmt.Printf("    %#v\n", iface)
-			//fmt.Printf("    name=%s, hwaddr=%s, Addrs=%s", iface.Name
+			fmt.Printf("    name=%s, hwaddr=%s, Addrs=%s", iface.Name, iface.Hwaddr, iface.Addrs)
 		}
 	}
-	return
+	return nil
 }
 
 func (m *LibvirtManager) ListAll() ([]string, error) {
