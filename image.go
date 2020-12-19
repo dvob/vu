@@ -2,90 +2,159 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"path/filepath"
+	"time"
 
+	"github.com/digitalocean/go-libvirt"
+	"github.com/dvob/vu/internal/image"
+	manager "github.com/dvob/vu/internal/image/libvirt"
 	"github.com/spf13/cobra"
 )
+
+type libvirtOptions struct {
+	// TODO: add connect URI
+	libvirt *libvirt.Libvirt
+}
+
+func (o *libvirtOptions) complete() error {
+	c, err := net.DialTimeout("unix", "/var/run/libvirt/libvirt-sock", 2*time.Second)
+	if err != nil {
+		return fmt.Errorf("failed to connect to libvirtd: %s", err)
+	}
+
+	o.libvirt = libvirt.New(c)
+	if err := o.libvirt.Connect(); err != nil {
+		return fmt.Errorf("failed to connect: %v", err)
+	}
+	return nil
+}
+
+type imageOptions struct {
+	pool    string
+	path    string
+	libvirt libvirtOptions
+	image.Manager
+}
+
+func newImageOptions() *imageOptions {
+	return &imageOptions{
+		pool: "vu_base_images",
+		path: filepath.Join(os.Getenv("HOME"), ".local", "share", "vu", "base_image"),
+	}
+}
+
+func (o *imageOptions) bindFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(&o.pool, "pool", o.pool, "Storage pool for base images.")
+	cmd.PersistentFlags().StringVar(&o.path, "pool-path", o.path, "Path for the storage pool for base images.")
+}
+
+func (o *imageOptions) complete() error {
+	err := o.libvirt.complete()
+	if err != nil {
+		return err
+	}
+
+	o.Manager = manager.New(o.pool, o.path, o.libvirt.libvirt)
+	return nil
+}
 
 func newImageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "image",
-		Short: "manage base images",
+		Short: "manage images",
 	}
 	cmd.AddCommand(
 		newImageListCmd(),
-		newImageGetCmd(),
+		newImageAddCmd(),
 		newImageRemoveCmd(),
 	)
-	addPoolOption(cmd.PersistentFlags(), &virStoragePool)
 	return cmd
 }
 
-func newImageGetCmd() *cobra.Command {
+func newImageAddCmd() *cobra.Command {
 	var (
 		name string
 		url  string
+		o    = newImageOptions()
 	)
 	cmd := &cobra.Command{
-		Use:   "get <name> <url>",
-		Short: "create new base image form url",
-		Long:  "get a base image from either an http:// or file:// url  and store it in the storage pool",
-		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			name = args[0]
-			url = args[1]
-
-			err := mgr.CreateBaseImage(name, url)
+		Use:   "add URL [name]",
+		Short: "Add a new image from URL",
+		Long: `Adds a new image from a URL. An URL can either have a http, https or
+file scheme. If no name is given the name is derived from the URL.`,
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := o.complete()
 			if err != nil {
-				errExit(err)
+				return err
 			}
+			url = args[0]
+			if len(args) > 1 {
+				name = args[1]
+			}
+			_, err = image.AddFromURL(o, name, url, os.Stdout)
+			return err
 		},
 	}
+	o.bindFlags(cmd)
 	return cmd
 }
 
 func newImageListCmd() *cobra.Command {
+	o := newImageOptions()
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list images",
 		Aliases: []string{"ls"},
-		Run: func(cmd *cobra.Command, args []string) {
-			images, err := mgr.ImageList()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := o.complete()
 			if err != nil {
-				errExit(err)
+				return err
+			}
+			images, err := o.List()
+			if err != nil {
+				return err
 			}
 			for _, image := range images {
-				fmt.Println(image)
+				fmt.Println(image.Name)
 			}
+			return nil
 		},
 	}
+	o.bindFlags(cmd)
 	return cmd
 }
 
 func newImageRemoveCmd() *cobra.Command {
 	var (
-		name   string
-		names  []string
-		failed bool
+		o     = newImageOptions()
+		names []string
+		errs  = []error{}
 	)
 	cmd := &cobra.Command{
 		Use:     "remove <name>...",
 		Short:   "remove images",
 		Aliases: []string{"rm"},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := o.complete()
+			if err != nil {
+				return err
+			}
 			names = args
-
-			for _, name = range names {
-				err := mgr.ImageRemove(name)
+			for _, name := range names {
+				err := o.Remove(name)
 				if err != nil {
-					failed = true
-					errPrint(err)
+					errs = append(errs, err)
 				}
 			}
-			if failed {
-				os.Exit(1)
+			if len(errs) > 0 {
+				return errs[0]
 			}
+			return nil
 		},
 	}
+	o.bindFlags(cmd)
 	return cmd
 }

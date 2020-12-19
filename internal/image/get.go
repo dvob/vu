@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cheggaaa/pb"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
-func AddFromURL(service Manager, src string, progress io.Writer) (*Image, error) {
+func AddFromURL(service Manager, name, src string, progress io.Writer) (*Image, error) {
 	u, err := url.Parse(src)
 
 	if err != nil {
@@ -58,7 +58,10 @@ func AddFromURL(service Manager, src string, progress io.Writer) (*Image, error)
 		bar.Start()
 		reader = bar.NewProxyReader(reader)
 	}
-	image, err := service.Create(filepath.Base(u.Path), reader)
+	if name == "" {
+		name = filepath.Base(u.Path)
+	}
+	image, err := service.Create(name, reader)
 	if err != nil {
 		return nil, err
 	}

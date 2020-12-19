@@ -55,9 +55,13 @@ func (s *Manager) List() ([]image.Image, error) {
 
 	images := []image.Image{}
 	for _, file := range files {
+		absPath, err := filepath.Abs(filepath.Join(s.dir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
 		images = append(images, image.Image{
 			Name:     file.Name(),
-			Location: filepath.Join(s.dir, file.Name()),
+			Location: absPath,
 		})
 	}
 	return images, nil
