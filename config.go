@@ -7,7 +7,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/dsbrng25b/vu/internal/cloud-init"
+	"github.com/dvob/vu/internal/cloud-init"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )

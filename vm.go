@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dsbrng25b/vu/internal/cloud-init"
-	"github.com/dsbrng25b/vu/internal/virt"
+	"github.com/dvob/vu/internal/cloud-init"
+	"github.com/dvob/vu/internal/virt"
 	"github.com/spf13/cobra"
 )
 
