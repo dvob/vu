@@ -10,17 +10,19 @@ import (
 	"github.com/dvob/vu/internal/image"
 )
 
-type Service struct {
+var _ image.Manager = &Manager{}
+
+type Manager struct {
 	dir string
 }
 
-func New(baseDir string) *Service {
-	return &Service{
+func New(baseDir string) *Manager {
+	return &Manager{
 		dir: baseDir,
 	}
 }
 
-func (s *Service) Add(name string, img io.Reader) (*image.Image, error) {
+func (s *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
 	err := os.MkdirAll(s.dir, 0750)
 	if err != nil {
 		return nil, err
@@ -45,7 +47,7 @@ func (s *Service) Add(name string, img io.Reader) (*image.Image, error) {
 
 }
 
-func (s *Service) List() ([]image.Image, error) {
+func (s *Manager) List() ([]image.Image, error) {
 	files, err := ioutil.ReadDir(s.dir)
 	if err != nil {
 		return nil, err
@@ -61,6 +63,6 @@ func (s *Service) List() ([]image.Image, error) {
 	return images, nil
 }
 
-func (s *Service) Remove(name string) error {
+func (s *Manager) Remove(name string) error {
 	return os.Remove(filepath.Join(s.dir, name))
 }

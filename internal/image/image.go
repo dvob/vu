@@ -2,8 +2,8 @@ package image
 
 import "io"
 
-type Service interface {
-	Create(name string, image io.Reader) (Image, error)
+type Manager interface {
+	Create(name string, image io.ReadCloser) (*Image, error)
 	List() ([]Image, error)
 	Remove(name string) error
 }
