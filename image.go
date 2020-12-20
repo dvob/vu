@@ -61,23 +61,24 @@ func (o *imageOptions) complete() error {
 }
 
 func newImageCmd() *cobra.Command {
+	o := newImageOptions()
 	cmd := &cobra.Command{
 		Use:   "image",
 		Short: "manage images",
 	}
 	cmd.AddCommand(
-		newImageListCmd(),
-		newImageAddCmd(),
-		newImageRemoveCmd(),
+		newImageListCmd(o),
+		newImageAddCmd(o),
+		newImageRemoveCmd(o),
 	)
+	o.bindFlags(cmd)
 	return cmd
 }
 
-func newImageAddCmd() *cobra.Command {
+func newImageAddCmd(o *imageOptions) *cobra.Command {
 	var (
 		name string
 		url  string
-		o    = newImageOptions()
 	)
 	cmd := &cobra.Command{
 		Use:   "add URL [name]",
@@ -98,12 +99,10 @@ file scheme. If no name is given the name is derived from the URL.`,
 			return err
 		},
 	}
-	o.bindFlags(cmd)
 	return cmd
 }
 
-func newImageListCmd() *cobra.Command {
-	o := newImageOptions()
+func newImageListCmd(o *imageOptions) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list images",
@@ -123,13 +122,11 @@ func newImageListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	o.bindFlags(cmd)
 	return cmd
 }
 
-func newImageRemoveCmd() *cobra.Command {
+func newImageRemoveCmd(o *imageOptions) *cobra.Command {
 	var (
-		o     = newImageOptions()
 		names []string
 		errs  = []error{}
 	)
@@ -155,6 +152,5 @@ func newImageRemoveCmd() *cobra.Command {
 			return nil
 		},
 	}
-	o.bindFlags(cmd)
 	return cmd
 }

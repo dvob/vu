@@ -23,6 +23,28 @@ var (
 	networkFileName = "network-config"
 )
 
+// NewDefaultConfig returns a minimal default config based on name, user and
+// ssh public key
+func NewDefaultConfig(name, user, sshPubKey string) *Config {
+	return &Config{
+		MetaData: &MetaData{
+			Hostname:   name,
+			InstanceID: name,
+		},
+		UserData: &UserData{
+			Users: []User{
+				{
+					Name: user,
+					Sudo: "ALL=(ALL) NOPASSWD:ALL",
+					SSHAuthorizedKeys: []string{
+						sshPubKey,
+					},
+				},
+			},
+		},
+	}
+}
+
 // Merge merges configuration c2 into Config. Configurations in c2 overwrite
 // configurations in Config.
 func (c *Config) Merge(c2 *Config) error {
@@ -76,20 +98,51 @@ func configFromDir(dir string) (*Config, error) {
 		return nil, err
 	}
 
+	metaFile := filepath.Join(dir, metaFileName)
+	userFile := filepath.Join(dir, userFileName)
+	networkFile := filepath.Join(dir, networkFileName)
+
 	c := &Config{}
 
-	err = unmarshalFromFile(filepath.Join(dir, metaFileName), c.MetaData)
+	data, err := ioutil.ReadFile(metaFile)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		c.MetaData = &MetaData{}
+		err := c.MetaData.Unmarshal(data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read '%s': %w", metaFile, err)
+		}
 	}
-	err = unmarshalFromFile(filepath.Join(dir, userFileName), c.UserData)
+
+	data, err = ioutil.ReadFile(userFile)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		c.UserData = &UserData{}
+		err := c.UserData.Unmarshal(data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read '%s': %w", userFile, err)
+		}
 	}
-	err = unmarshalFromFile(filepath.Join(dir, networkFileName), c.NetworkConfig)
+
+	data, err = ioutil.ReadFile(networkFile)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		c.NetworkConfig = &NetworkConfig{}
+		err := c.NetworkConfig.Unmarshal(data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read '%s': %w", networkFile, err)
+		}
 	}
+
 	return c, nil
 }
 
@@ -100,18 +153,25 @@ func (c *Config) ToDir(dir string) error {
 		return err
 	}
 
-	err = marshalToFile(filepath.Join(dir, metaFileName), c.MetaData)
-	if err != nil {
-		return err
+	if c.MetaData != nil {
+		err = marshalToFile(filepath.Join(dir, metaFileName), c.MetaData)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = marshalToFile(filepath.Join(dir, userFileName), c.UserData)
-	if err != nil {
-		return err
+	if c.UserData != nil {
+		err = marshalToFile(filepath.Join(dir, userFileName), c.UserData)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = marshalToFile(filepath.Join(dir, networkFileName), c.NetworkConfig)
-	return err
+	if c.NetworkConfig != nil {
+		err = marshalToFile(filepath.Join(dir, networkFileName), c.NetworkConfig)
+		return err
+	}
+	return nil
 }
 
 // ISO returns the cloud init configuration as ISO image

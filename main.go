@@ -55,6 +55,7 @@ func newRootCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		newImageCmd(),
+		newConfigCmd(),
 		newCompletionCmd(),
 		newVersionCmd(),
 	)

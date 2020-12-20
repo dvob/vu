@@ -3,7 +3,6 @@ package cloudinit
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"reflect"
 
 	"github.com/ghodss/yaml"
@@ -82,18 +81,6 @@ func rawUnmarshal(data []byte, o interface{}, raw *map[string]interface{}) error
 		return err
 	}
 	return yaml.Unmarshal(data, o)
-}
-
-// unmarshalFromFile unmarshals the content of a file if the file exists
-func unmarshalFromFile(file string, m Marshaler) error {
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	return m.Unmarshal(data)
 }
 
 // marshalToFile marshals to a file if the marshaler is not nil
