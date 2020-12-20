@@ -23,6 +23,8 @@ var (
 	networkFileName = "network-config"
 )
 
+// Merge merges configuration c2 into Config. Configurations in c2 overwrite
+// configurations in Config.
 func (c *Config) Merge(c2 *Config) error {
 	if c.MetaData == nil {
 		c.MetaData = c2.MetaData
@@ -51,8 +53,24 @@ func (c *Config) Merge(c2 *Config) error {
 	return nil
 }
 
-// ConfigFromDir reads cloud-init configuration from a directory
-func ConfigFromDir(dir string) (*Config, error) {
+// ConfigFromDir reads cloud-init configuration from directories. If multiple
+// directories are passed, configurations of later directories overwrite
+// configurations of previous directories
+func ConfigFromDir(dirs ...string) (*Config, error) {
+	config := &Config{}
+
+	for _, dir := range dirs {
+		c, err := configFromDir(dir)
+		if err != nil {
+			return nil, err
+		}
+		config.Merge(c)
+	}
+	return config, nil
+}
+
+// configFromDir reads cloud-init configuration from a directory
+func configFromDir(dir string) (*Config, error) {
 	_, err := os.Stat(dir)
 	if err != nil {
 		return nil, err
@@ -129,6 +147,7 @@ func (c *Config) ISO() ([]byte, error) {
 	return stdOut.Bytes(), nil
 }
 
+// String returns a string representation of all cloud-init configs
 func (c *Config) String() (string, error) {
 	var (
 		meta    []byte
