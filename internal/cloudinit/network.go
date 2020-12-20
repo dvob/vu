@@ -2,8 +2,6 @@ package cloudinit
 
 import (
 	"net"
-
-	"gopkg.in/yaml.v2"
 )
 
 type NetworkParameter struct {
@@ -14,31 +12,38 @@ type NetworkParameter struct {
 }
 
 type NetworkConfig struct {
-	Version   int                 `yaml:"version"`
-	Ethernets map[string]Ethernet `yaml:"ethernets"`
+	Raw       map[string]interface{} `json:"-"`
+	Version   int                    `json:"version"`
+	Ethernets map[string]Ethernet    `json:"ethernets"`
 }
 
 type Ethernet struct {
-	Match     *Match   `yaml:"match,omitempty"`
-	Addresses []string `yaml:"addresses,omitempty"`
-	DHCP      *bool    `yaml:"dhcp4,omitempty"`
-	Gateway   *string  `yaml:"gateway4,omitempty"`
-	DNS       *DNS     `yaml:"nameservers,omitempty"`
+	Match     *Match   `json:"match,omitempty"`
+	Addresses []string `json:"addresses,omitempty"`
+	DHCP      *bool    `json:"dhcp4,omitempty"`
+	Gateway   *string  `json:"gateway4,omitempty"`
+	DNS       *DNS     `json:"nameservers,omitempty"`
 }
 
 type Match struct {
-	Name *string `yaml:"name,omitempty"`
-	MAC  *string `yaml:"macaddress,omitempty"`
+	Name *string `json:"name,omitempty"`
+	MAC  *string `json:"macaddress,omitempty"`
 }
 
 type DNS struct {
-	Servers []string `yaml:"addresses"`
-	Search  []string `yaml:"search,omitempty"`
+	Servers []string `json:"addresses"`
+	Search  []string `json:"search,omitempty"`
 }
 
-func (c *NetworkConfig) String() (string, error) {
-	data, err := yaml.Marshal(c)
-	return string(data), err
+func (nc *NetworkConfig) Marshal() ([]byte, error) {
+	return mergeMarshal(nc, nc.Raw)
+}
+
+func (nc *NetworkConfig) Unmarshal(data []byte) error {
+	if nc == nil {
+		nc = &NetworkConfig{}
+	}
+	return rawUnmarshal(data, nc, nc.Raw)
 }
 
 func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {
