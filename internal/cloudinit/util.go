@@ -38,8 +38,8 @@ func mergeMarshal(overrides interface{}, raw map[string]interface{}) ([]byte, er
 	return yaml.Marshal(&raw)
 }
 
-func rawUnmarshal(data []byte, o interface{}, raw map[string]interface{}) error {
-	err := yaml.Unmarshal(data, &raw)
+func rawUnmarshal(data []byte, o interface{}, raw *map[string]interface{}) error {
+	err := yaml.Unmarshal(data, raw)
 	if err != nil {
 		return err
 	}

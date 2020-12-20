@@ -32,8 +32,5 @@ func (ud *UserData) Marshal() ([]byte, error) {
 }
 
 func (ud *UserData) Unmarshal(data []byte) error {
-	if ud == nil {
-		ud = &UserData{}
-	}
-	return rawUnmarshal(data, ud, ud.Raw)
+	return rawUnmarshal(data, ud, &ud.Raw)
 }

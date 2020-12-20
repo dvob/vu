@@ -16,12 +16,13 @@ users:
 - name: sepp
   lock_passwd: false
 `
-	var ud UserData
+	ud := &UserData{}
 	err := ud.Unmarshal([]byte(userdata))
 	is.NoErr(err)
 
-	is.Equal(len(ud.Users), 1)         // one user in users
-	is.Equal(ud.Users[0].Name, "sepp") // first users is sepp
+	is.Equal(ud.Raw["unsupported_field"], "blabla") // unsupported_field was read
+	is.Equal(len(ud.Users), 1)                      // one user in users
+	is.Equal(ud.Users[0].Name, "sepp")              // first users is sepp
 
 	ud.Users[0].Name = "vreni"
 

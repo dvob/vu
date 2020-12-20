@@ -12,8 +12,5 @@ func (md *MetaData) Marshal() ([]byte, error) {
 }
 
 func (md *MetaData) Unmarshal(data []byte) error {
-	if md == nil {
-		md = &MetaData{}
-	}
-	return rawUnmarshal(data, md, md.Raw)
+	return rawUnmarshal(data, md, &md.Raw)
 }

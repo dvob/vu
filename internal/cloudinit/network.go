@@ -40,10 +40,7 @@ func (nc *NetworkConfig) Marshal() ([]byte, error) {
 }
 
 func (nc *NetworkConfig) Unmarshal(data []byte) error {
-	if nc == nil {
-		nc = &NetworkConfig{}
-	}
-	return rawUnmarshal(data, nc, nc.Raw)
+	return rawUnmarshal(data, nc, &nc.Raw)
 }
 
 func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {

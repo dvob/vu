@@ -76,7 +76,7 @@ func (c *Config) ISO() ([]byte, error) {
 	}
 	defer os.RemoveAll(tmp)
 
-	err = c.WriteToDir(tmp)
+	err = c.ToDir(tmp)
 	if err != nil {
 		return nil, err
 	}
