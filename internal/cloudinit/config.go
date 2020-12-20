@@ -23,6 +23,34 @@ var (
 	networkFileName = "network-config"
 )
 
+func (c *Config) Merge(c2 *Config) error {
+	if c.MetaData == nil {
+		c.MetaData = c2.MetaData
+	} else {
+		err := c.MetaData.Merge(c2.MetaData)
+		if err != nil {
+			return err
+		}
+	}
+	if c.UserData == nil {
+		c.UserData = c2.UserData
+	} else {
+		err := c.UserData.Merge(c2.UserData)
+		if err != nil {
+			return err
+		}
+	}
+	if c.NetworkConfig == nil {
+		c.NetworkConfig = c2.NetworkConfig
+	} else {
+		err := c.NetworkConfig.Merge(c2.NetworkConfig)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ConfigFromDir reads cloud-init configuration from a directory
 func ConfigFromDir(dir string) (*Config, error) {
 	_, err := os.Stat(dir)

@@ -14,3 +14,7 @@ func (md *MetaData) Marshal() ([]byte, error) {
 func (md *MetaData) Unmarshal(data []byte) error {
 	return rawUnmarshal(data, md, &md.Raw)
 }
+
+func (md *MetaData) Merge(md2 *MetaData) error {
+	return merge(md, md2)
+}

@@ -34,3 +34,7 @@ func (ud *UserData) Marshal() ([]byte, error) {
 func (ud *UserData) Unmarshal(data []byte) error {
 	return rawUnmarshal(data, ud, &ud.Raw)
 }
+
+func (ud *UserData) Merge(ud2 *UserData) error {
+	return merge(ud, ud2)
+}

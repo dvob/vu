@@ -43,6 +43,10 @@ func (nc *NetworkConfig) Unmarshal(data []byte) error {
 	return rawUnmarshal(data, nc, &nc.Raw)
 }
 
+func (nc *NetworkConfig) Merge(nc2 *NetworkConfig) error {
+	return merge(nc, nc2)
+}
+
 func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {
 	var (
 		matchName  = "en*"

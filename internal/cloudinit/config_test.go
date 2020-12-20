@@ -42,3 +42,80 @@ users:
 	is.Equal(len(ud1.Users), 1)          // one user in users
 	is.Equal(ud1.Users[0].Name, "vreni") // vreni overrides sepp
 }
+
+func Test_MergeConfig(t *testing.T) {
+	is := is.New(t)
+
+	gw1 := "192.168.1.1"
+	c1 := &Config{
+		UserData: &UserData{
+			Raw: map[string]interface{}{
+				"final_message": "Bla bli blo",
+			},
+			Users: []User{
+				{
+					Name: "john",
+				},
+			},
+		},
+		NetworkConfig: &NetworkConfig{
+			Ethernets: map[string]Ethernet{
+				"default": {
+					Gateway: &gw1,
+					DNS: &DNS{
+						Servers: []string{"8.8.8.8"},
+					},
+				},
+			},
+		},
+	}
+
+	gw2 := "10.0.0.1"
+	c2 := &Config{
+		MetaData: &MetaData{
+			Hostname: "myserver.example.com",
+		},
+		NetworkConfig: &NetworkConfig{
+			Ethernets: map[string]Ethernet{
+				"default": {
+					Gateway: &gw2,
+				},
+			},
+		},
+	}
+
+	expectedConfig := &Config{
+		MetaData: &MetaData{
+			Hostname: "myserver.example.com",
+		},
+		UserData: &UserData{
+			Raw: map[string]interface{}{
+				"final_message": "Bla bli blo",
+			},
+			Users: []User{
+				{
+					Name: "john",
+				},
+			},
+		},
+		NetworkConfig: &NetworkConfig{
+			Ethernets: map[string]Ethernet{
+				"default": {
+					Gateway: &gw2,
+					DNS: &DNS{
+						Servers: []string{"8.8.8.8"},
+					},
+				},
+			},
+		},
+	}
+	expectedOutput, err := expectedConfig.String()
+	is.NoErr(err) // failed to render expectedOutput
+
+	err = c1.Merge(c2)
+	is.NoErr(err) // failed to merge c2 into c1
+
+	c1Output, err := c1.String()
+	is.NoErr(err) // failed to render c1Output
+	is.Equal(expectedOutput, c1Output)
+}
