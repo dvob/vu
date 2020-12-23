@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	vu "github.com/dvob/vu/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -27,6 +28,10 @@ func main() {
 }
 
 func newRootCmd() *cobra.Command {
+	var (
+		mgr = &vu.Manager{}
+	)
+	opts := vu.NewLibvirtDefaultOptions()
 	cmd := &cobra.Command{
 		Use:              "vu",
 		Short:            "vu spins up virtual machines using cloud-init images",
@@ -47,6 +52,13 @@ func newRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			m, err := vu.NewLibvirtManager(opts)
+			if err != nil {
+				return err
+			}
+			*mgr = *m
+
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 
@@ -54,7 +66,12 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(
-		newImageCmd(),
+		newImageCmd(mgr),
+		newCreateCmd(mgr),
+		newStartCmd(mgr),
+		newShutdownCmd(mgr),
+		newRemoveCmd(mgr),
+		newListCmd(mgr),
 		newConfigCmd(),
 		newCompletionCmd(),
 		newVersionCmd(),

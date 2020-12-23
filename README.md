@@ -1,15 +1,16 @@
 # vu
-vu (**v**irtual machin **up**) is a CLI tool to quickly spin up a virtual machine.
+vu (**v**irtual machin **up**) is a CLI tool to quickly spin up a virtual machines.
+
 
 ```bash
 # get image
-vu image get https://cloud-images.ubuntu.com/daily/server/bionic/current/bionic-server-cloudimg-amd64.img ubuntu_bionic_current
+vu image add https://cloud-images.ubuntu.com/daily/server/bionic/current/bionic-server-cloudimg-amd64.img
 
 # list images
 vu image ls
 
 # create new VM
-vu create mytest1
+vu create bionic-server-cloudimg-amd64.img mytest1
 
 # list VMs
 vu list

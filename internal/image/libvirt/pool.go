@@ -138,21 +138,30 @@ func (m *Manager) Get(name string) (*image.Image, error) {
 	}, nil
 }
 
-func (m *Manager) Clone(name string, baseImageLocation string, newSize uint64) (*libvirt.StorageVol, error) {
+func (m *Manager) Clone(baseImageName string, name string, newSize uint64) (*image.Image, error) {
 	sp, err := m.createOrGetPool()
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
 	}
+
+	baseImage, err := m.Get(baseImageName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base image %s: %w", baseImageName, err)
+	}
+
+	// TODO add owner and group
 	vol := &libvirtxml.StorageVolume{
 		Name: name,
 		Target: &libvirtxml.StorageVolumeTarget{
 			Format: &libvirtxml.StorageVolumeTargetFormat{
+				// TODO: should not use fix format here
 				Type: "qcow2",
 			},
 		},
 		BackingStore: &libvirtxml.StorageVolumeBackingStore{
-			Path: baseImageLocation,
+			Path: baseImage.Location,
 			Format: &libvirtxml.StorageVolumeTargetFormat{
+				// TODO: should not use fix format here
 				Type: "qcow2",
 			},
 		},
@@ -171,7 +180,10 @@ func (m *Manager) Clone(name string, baseImageLocation string, newSize uint64) (
 	}
 
 	sv, err := m.StorageVolCreateXML(*sp, xml, 0)
-	return &sv, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone image: %w", err)
+	}
+	return m.Get(sv.Name)
 }
 
 func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
@@ -205,7 +217,6 @@ func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(xml))
 	sp, err = m.StoragePoolCreateXML(xml, 0)
 	return &sp, err
 }

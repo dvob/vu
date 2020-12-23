@@ -1,4 +1,4 @@
-package virt
+package libvirt
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 	"github.com/dvob/vu/internal/vm"
 	libvirtxml "github.com/libvirt/libvirt-go-xml"
 )
+
+var _ vm.Manager = &Manager{}
 
 type Manager struct {
 	*libvirt.Libvirt
@@ -58,30 +60,36 @@ func (m *Manager) ListDetail() error {
 	return nil
 }
 
-func (m *Manager) List() ([]string, error) {
-	var domNames = []string{}
+func (m *Manager) List() ([]vm.State, error) {
 	// TODO: not sure why first paramater has to be 1
 	domains, _, err := m.ConnectListAllDomains(1, 0)
 	if err != nil {
 		return nil, err
 	}
+	vms := []vm.State{}
 	for _, dom := range domains {
-		domNames = append(domNames, dom.Name)
+		vms = append(vms, vm.State{
+			Name: dom.Name,
+		})
 	}
-	return domNames, nil
+	return vms, nil
 }
 
-func (m *Manager) Create(cfg *vm.Config) error {
+func (m *Manager) Get(name string) (*vm.State, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *Manager) Create(name string, cfg *vm.Config) error {
 	domain := &libvirtxml.Domain{
-		Name:        cfg.Name,
+		Name:        name,
 		Type:        "kvm",
 		Description: "created by vu",
 		Memory: &libvirtxml.DomainMemory{
-			Value: cfg.Memory,
+			Value: uint(cfg.Memory),
 			Unit:  "b",
 		},
 		VCPU: &libvirtxml.DomainVCPU{
-			Value: cfg.VCPU,
+			Value: cfg.CPUCount,
 		},
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
@@ -94,7 +102,7 @@ func (m *Manager) Create(cfg *vm.Config) error {
 		},
 		Devices: &libvirtxml.DomainDeviceList{
 			Disks: []libvirtxml.DomainDisk{
-				libvirtxml.DomainDisk{
+				{
 					Device: "disk",
 					Driver: &libvirtxml.DomainDiskDriver{
 						Name: "qemu",
@@ -106,7 +114,7 @@ func (m *Manager) Create(cfg *vm.Config) error {
 					},
 					Source: &libvirtxml.DomainDiskSource{
 						File: &libvirtxml.DomainDiskSourceFile{
-							File: cfg.BaseImage,
+							File: cfg.Image,
 						},
 					},
 				}, {
@@ -121,13 +129,13 @@ func (m *Manager) Create(cfg *vm.Config) error {
 					},
 					Source: &libvirtxml.DomainDiskSource{
 						File: &libvirtxml.DomainDiskSourceFile{
-							File: cfg.ConfigISO,
+							File: cfg.ISO,
 						},
 					},
 				},
 			},
 			Interfaces: []libvirtxml.DomainInterface{
-				libvirtxml.DomainInterface{
+				{
 					Source: &libvirtxml.DomainInterfaceSource{
 						Network: &libvirtxml.DomainInterfaceSourceNetwork{
 							Network: cfg.Network,
@@ -139,7 +147,7 @@ func (m *Manager) Create(cfg *vm.Config) error {
 				},
 			},
 			Serials: []libvirtxml.DomainSerial{
-				libvirtxml.DomainSerial{},
+				{},
 			},
 		},
 	}

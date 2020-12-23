@@ -2,235 +2,150 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
 
-	"github.com/dvob/vu/internal/cloud-init"
-	"github.com/dvob/vu/internal/virt"
+	vu "github.com/dvob/vu/internal"
+	"github.com/dvob/vu/internal/cloudinit"
+	"github.com/dvob/vu/internal/vm"
 	"github.com/spf13/cobra"
 )
 
-const configVolumePrefix = "vu_config_"
+type vmOptions struct {
+	names []string
+	vm    vm.Config
+	ci    cloudInitOptions
+}
 
-func newCreateCmd() *cobra.Command {
-	var (
-		name           string
-		names          []string
-		baseImage      string
-		user           string
-		sshAuthKeyFile string
-		passwordHash   string
-		vcpus          uint
-		memory         ByteSize
-		network        string
-		cloudCfg       *cloudinit.Config
-		configDir      []string
-		networkParams  = &cloudinit.NetworkParameter{}
-		diskSize       ByteSize
-	)
+func (o *vmOptions) complete() error {
+	err := o.ci.complete()
+	if err != nil {
+		return err
+	}
 
-	// set default
-	_ = memory.Set("1024m")
+	return nil
+}
+
+func (o *vmOptions) bindFlags(cmd *cobra.Command) {
+	o.ci.bindFlags(cmd)
+
+	cmd.Flags().Var(NewByteSize(&o.vm.Memory), "memory", "amount of memory")
+	cmd.Flags().Var(NewByteSize(&o.vm.DiskSize), "disk-size", "size of the cloned image")
+
+	cmd.Flags().UintVar(&o.vm.CPUCount, "cpu", 1, "number of vCPUs")
+	cmd.Flags().StringVar(&o.vm.Network, "network", "default", "name of the network to connect to")
+}
+
+func newCreateCmd(mgr *vu.Manager) *cobra.Command {
+	options := &vmOptions{}
 	cmd := &cobra.Command{
-		Use:   "create <base_image> <name>...",
-		Short: "create new VMs from base image",
+		Use:   "create BASE_IMAGE NAME...",
+		Short: "create new VMs from a base image",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			baseImage = args[0]
-			names = args[1:]
-
-			sshAuthKey, err := ioutil.ReadFile(sshAuthKeyFile)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := options.complete()
 			if err != nil {
-				errExit(err)
+				return err
 			}
+			baseImage := args[0]
+			names := args[1:]
 
-			if len(configDir) > 0 {
-				for _, dir := range configDir {
-					fi, err := os.Stat(dir)
-					if err != nil {
-						errExit(err)
-					}
-					if !fi.IsDir() {
-						errExit(dir, "is not a directory")
-					}
-				}
-			}
+			for _, name := range names {
+				nameConfig := cloudinit.NewDefaultConfig(name, options.ci.user, options.ci.sshPubKey)
 
-			var failed = false
-			var i int
-
-			for i, name = range names {
-
-				var iso io.Reader
-				var configVolumeName = configVolumePrefix + name
-
-				if len(configDir) > 0 {
-					iso, err = cloudinit.CreateISOFromDir(configDir[i%len(configDir)])
-				} else {
-					cloudCfg = cloudinit.NewDefaultConfig(name, user, string(sshAuthKey), passwordHash, networkParams)
-					iso, err = cloudCfg.CreateISO()
-				}
+				// TODO: copy?
+				err := options.ci.config.Merge(nameConfig)
 				if err != nil {
-					errExit("failed to create config iso:", err)
+					return err
 				}
 
-				_, err := mgr.CreateISOVolume(configVolumeName, iso)
+				err = mgr.Create(name, baseImage, &options.vm, options.ci.config)
 				if err != nil {
-					errExit("failed to create config volume:", err)
-				}
-
-				vmCfg := &virt.VMConfig{
-					Name:            name,
-					BaseImageVolume: baseImage,
-					ISOImageVolume:  configVolumeName,
-					Memory:          uint(memory),
-					VCPU:            vcpus,
-					Network:         network,
-					DiskSize:        uint64(diskSize),
-				}
-
-				err = mgr.Create(vmCfg)
-				if err != nil {
-					failed = true
-					errPrint(name+":", err)
+					return err
 				}
 			}
-			if failed {
-				os.Exit(1)
-			}
-
+			return nil
 		},
 	}
-	cmd.Flags().Var(&memory, "memory", "amount of memory")
-	cmd.Flags().Var(&diskSize, "disk-size", "size of the cloned image")
-	cmd.Flags().UintVar(&vcpus, "cpus", 1, "amount of cpus")
-	cmd.Flags().StringVar(&network, "network", "default", "name of the network")
-	cmd.Flags().StringSliceVar(&configDir, "dir", []string{}, "use cloud init config from directory. if you start multiple VMs simultaneously you can provide multiple directories")
-	addPasswordHashOption(cmd.Flags(), &passwordHash)
-	addSSHAuthKeyOption(cmd.Flags(), &sshAuthKeyFile)
-	addSSHUserOption(cmd.Flags(), &user)
-	addNetworkOptions(cmd.Flags(), networkParams)
+	options.bindFlags(cmd)
 	return cmd
 }
 
-func newRemoveCmd() *cobra.Command {
-	var (
-		name  string
-		names []string
-	)
+func newRemoveCmd(mgr *vu.Manager) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "remove <name>...",
+		Use:     "remove NAME...",
 		Short:   "remove VMs",
 		Aliases: []string{"rm"},
 		Args:    cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			names = args
+		RunE: func(cmd *cobra.Command, args []string) error {
+			names := args
 
-			failed := false
-			for _, name = range names {
+			for _, name := range names {
 				err := mgr.Remove(name)
 				if err != nil {
-					failed = true
-					errPrint(err)
+					return err
 				}
+			}
 
-				err = mgr.RemoveVolume(configVolumePrefix + name)
-				if err != nil {
-					failed = true
-					errPrint(err)
-				}
-			}
-			if failed {
-				os.Exit(1)
-			}
+			return nil
 		},
 	}
 	return cmd
 }
 
-func newStartCmd() *cobra.Command {
-	var (
-		name  string
-		names []string
-	)
+func newStartCmd(mgr *vu.Manager) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "start <name>...",
+		Use:   "start NAME...",
 		Short: "starts VMs",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			names = args
-
-			failed := false
-			for _, name = range names {
-				err := mgr.Start(name)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			names := args
+			for _, name := range names {
+				err := mgr.VM.Start(name)
 				if err != nil {
-					failed = true
-					errPrint(err)
+					return err
 				}
 			}
-			if failed {
-				os.Exit(1)
-			}
+			return nil
 		},
 	}
 	return cmd
 }
 
-func newListCmd() *cobra.Command {
-	var (
-		all bool
-		vms []string
-		err error
-	)
+func newListCmd(mgr *vu.Manager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "list VMs",
 		Aliases: []string{"ls"},
-		Run: func(cmd *cobra.Command, args []string) {
-			mgr.ListAllDetail()
-			if all {
-				vms, err = mgr.ListAll()
-			} else {
-				vms, err = mgr.List()
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vms, err := mgr.VM.List()
 			if err != nil {
-				errExit(err)
+				return err
 			}
 			for _, vm := range vms {
-				fmt.Println(vm)
+				fmt.Println(vm.Name)
 			}
-
+			return nil
 		},
 	}
-	cmd.Flags().BoolVarP(&all, "all", "a", false, "show also domains not created by vu")
 	return cmd
 }
 
-func newShutdownCmd() *cobra.Command {
+func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
 	var (
-		name  string
-		names []string
 		force bool
 	)
 	cmd := &cobra.Command{
-		Use:   "shutdown <name>...",
+		Use:   "shutdown NAME...",
 		Short: "shutdown VMs",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			names = args
-
-			failed := false
-			for _, name = range names {
-				err := mgr.Shutdown(name, force)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			names := args
+			for _, name := range names {
+				err := mgr.VM.Shutdown(name, force)
 				if err != nil {
-					failed = true
-					errPrint(err)
+					return err
 				}
 			}
-			if failed {
-				os.Exit(1)
-			}
+			return nil
 		},
 	}
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "force shutdown")
