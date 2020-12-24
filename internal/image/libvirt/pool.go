@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
-	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/dvob/vu/internal/image"
@@ -38,10 +35,8 @@ func (m *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
 		},
 		Target: &libvirtxml.StorageVolumeTarget{
 			Permissions: &libvirtxml.StorageVolumeTargetPermissions{
-				Owner: strconv.Itoa(syscall.Getuid()),
-				Group: strconv.Itoa(syscall.Getgid()),
 				// add as read-only since qcow2 base images should not be edited
-				Mode: "0400",
+				Mode: "0444",
 			},
 		},
 	}
@@ -197,19 +192,16 @@ func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
 		return nil, err
 	}
 
-	err = os.MkdirAll(m.path, 0750)
-	if err != nil {
-		return nil, err
-	}
+	// TODO change permissions to libvirt user
+	// err = os.MkdirAll(m.path, 0777)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	pool := libvirtxml.StoragePool{
 		Type: "dir",
 		Name: m.pool,
 		Target: &libvirtxml.StoragePoolTarget{
 			Path: m.path,
-			Permissions: &libvirtxml.StoragePoolTargetPermissions{
-				Owner: strconv.Itoa(syscall.Getuid()),
-				Group: strconv.Itoa(syscall.Getgid()),
-			},
 		},
 	}
 
@@ -217,6 +209,17 @@ func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
 	if err != nil {
 		return nil, err
 	}
-	sp, err = m.StoragePoolCreateXML(xml, 0)
-	return &sp, err
+	sp, err = m.StoragePoolCreateXML(xml, libvirt.StoragePoolCreateWithBuild)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage pool: %w", err)
+	}
+	// err = m.StoragePoolBuild(sp, 0)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to build storage pool: %w", err)
+	// }
+	// err = m.StoragePoolCreate(sp, 0)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to build storage pool: %w", err)
+	// }
+	return &sp, nil
 }

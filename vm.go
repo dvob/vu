@@ -35,7 +35,12 @@ func (o *vmOptions) bindFlags(cmd *cobra.Command) {
 }
 
 func newCreateCmd(mgr *vu.Manager) *cobra.Command {
-	options := &vmOptions{}
+	options := &vmOptions{
+		vm: vm.Config{
+			// 1Gib
+			Memory: 1_073_741_824,
+		},
+	}
 	cmd := &cobra.Command{
 		Use:   "create BASE_IMAGE NAME...",
 		Short: "create new VMs from a base image",
@@ -121,7 +126,7 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 				return err
 			}
 			for _, vm := range vms {
-				fmt.Println(vm.Name)
+				fmt.Println(vm.Name, vm.Images)
 			}
 			return nil
 		},

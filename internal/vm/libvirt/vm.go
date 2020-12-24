@@ -68,15 +68,53 @@ func (m *Manager) List() ([]vm.State, error) {
 	}
 	vms := []vm.State{}
 	for _, dom := range domains {
-		vms = append(vms, vm.State{
-			Name: dom.Name,
-		})
+		vm, err := m.get(dom)
+		if err != nil {
+			return nil, err
+		}
+		vms = append(vms, *vm)
 	}
 	return vms, nil
 }
 
 func (m *Manager) Get(name string) (*vm.State, error) {
-	return nil, fmt.Errorf("not implemented")
+	dom, err := m.DomainLookupByName(name)
+	if err != nil {
+		return nil, err
+	}
+	return m.get(dom)
+}
+
+func (m *Manager) get(dom libvirt.Domain) (*vm.State, error) {
+	state := &vm.State{
+		Name: dom.Name,
+	}
+
+	xml, err := m.DomainGetXMLDesc(dom, 0)
+	if err != nil {
+		return nil, err
+	}
+	vmDef := &libvirtxml.Domain{}
+	err = vmDef.Unmarshal(xml)
+	if err != nil {
+		return nil, err
+	}
+	state.Images = getDisksFromDomain(vmDef)
+	return state, nil
+}
+
+func getDisksFromDomain(dom *libvirtxml.Domain) []string {
+	disks := []string{}
+	if dom.Devices == nil {
+		return nil
+	}
+	for _, disk := range dom.Devices.Disks {
+		if disk.Source == nil {
+			continue
+		}
+		disks = append(disks, disk.Source.File.File)
+	}
+	return disks
 }
 
 func (m *Manager) Create(name string, cfg *vm.Config) error {
@@ -156,6 +194,7 @@ func (m *Manager) Create(name string, cfg *vm.Config) error {
 	if err != nil {
 		return nil
 	}
+	fmt.Println(xml)
 
 	dom, err := m.DomainDefineXML(xml)
 	if err != nil {
@@ -168,23 +207,6 @@ func (m *Manager) Create(name string, cfg *vm.Config) error {
 
 // Remove removes the domain and its volumes
 func (m *Manager) Remove(name string) error {
-	err := m.removeVolume(name)
-	if err != nil {
-		return err
-	}
-	err = m.removeDomain(name)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *Manager) removeVolume(name string) error {
-	fmt.Println("remove volume not yet implemented")
-	return nil
-}
-
-func (m *Manager) removeDomain(name string) error {
 	dom, err := m.DomainLookupByName(name)
 	if err != nil {
 		return err
