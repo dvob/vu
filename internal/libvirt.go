@@ -9,6 +9,7 @@ import (
 	"github.com/digitalocean/go-libvirt"
 	image "github.com/dvob/vu/internal/image/libvirt"
 	vm "github.com/dvob/vu/internal/vm/libvirt"
+	"github.com/spf13/cobra"
 )
 
 type LibvirtOptions struct {
@@ -16,12 +17,16 @@ type LibvirtOptions struct {
 	BaseImageDir string
 }
 
+func (o *LibvirtOptions) BindFlags(cmd *cobra.Command, prefix string) {
+	cmd.Flags().StringVar(&o.URI, prefix+"uri", o.URI, "URI to connecto to libvirtd. either a unix socket in the format unix:/socket/path or an IP in the format tcp:127.0.0.1.")
+	cmd.Flags().StringVar(&o.BaseImageDir, prefix+"image-base-dir", o.BaseImageDir, "Base directory to create new storage pools for the images.")
+}
+
 func NewLibvirtDefaultOptions() *LibvirtOptions {
 	return &LibvirtOptions{
 		URI:          "unix:/var/run/libvirt/libvirt-sock",
 		BaseImageDir: "/var/lib/libvirt/images/vu",
 	}
-
 }
 
 func NewLibvirtManager(o *LibvirtOptions) (*Manager, error) {

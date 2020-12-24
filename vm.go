@@ -69,6 +69,7 @@ func newCreateCmd(mgr *vu.Manager) *cobra.Command {
 			}
 			return nil
 		},
+		ValidArgsFunction: completeBaseImageFunc(mgr),
 	}
 	options.bindFlags(cmd)
 	return cmd
@@ -92,6 +93,7 @@ func newRemoveCmd(mgr *vu.Manager) *cobra.Command {
 
 			return nil
 		},
+		ValidArgsFunction: completeVMFunc(mgr),
 	}
 	return cmd
 }
@@ -111,6 +113,7 @@ func newStartCmd(mgr *vu.Manager) *cobra.Command {
 			}
 			return nil
 		},
+		ValidArgsFunction: completeVMFunc(mgr),
 	}
 	return cmd
 }
@@ -126,7 +129,7 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 				return err
 			}
 			for _, vm := range vms {
-				fmt.Println(vm.Name, vm.Images)
+				fmt.Println(vm.Name)
 			}
 			return nil
 		},
@@ -152,7 +155,25 @@ func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
 			}
 			return nil
 		},
+		ValidArgsFunction: completeVMFunc(mgr),
 	}
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "force shutdown")
 	return cmd
+}
+
+func completeVMFunc(mgr *vu.Manager) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		vms, err := mgr.VM.List()
+		if err != nil {
+			fmt.Println(err)
+		}
+		vmNames := []string{}
+		for _, vm := range vms {
+			vmNames = append(vmNames, vm.Name)
+		}
+		return vmNames, cobra.ShellCompDirectiveNoFileComp
+	}
 }

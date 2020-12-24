@@ -95,3 +95,23 @@ func newImageRemoveCmd(mgr *vu.Manager, pool *string) *cobra.Command {
 	}
 	return cmd
 }
+
+func completeBaseImageFunc(mgr *vu.Manager) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		if len(args) > 1 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		vms, err := mgr.Image.List(mgr.BaseImagePool)
+		if err != nil {
+			fmt.Println(err)
+		}
+		vmNames := []string{}
+		for _, vm := range vms {
+			vmNames = append(vmNames, vm.Name)
+		}
+		return vmNames, cobra.ShellCompDirectiveNoFileComp
+	}
+}

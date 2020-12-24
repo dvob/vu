@@ -65,6 +65,7 @@ func newRootCmd() *cobra.Command {
 			return err
 		},
 	}
+	opts.BindFlags(cmd, "")
 	cmd.AddCommand(
 		newImageCmd(mgr),
 		newCreateCmd(mgr),
