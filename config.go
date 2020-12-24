@@ -81,7 +81,10 @@ func (o *cloudInitOptions) complete() error {
 	if err != nil {
 		return err
 	}
-	o.config.Merge(dirConfig)
+	err = o.config.Merge(dirConfig)
+	if err != nil {
+		return err
+	}
 
 	if o.config.UserData == nil {
 		o.config.UserData = &cloudinit.UserData{}
@@ -90,8 +93,7 @@ func (o *cloudInitOptions) complete() error {
 		o.config.MetaData = &cloudinit.MetaData{}
 	}
 	c := cloudinit.NewDefaultConfig(o.name, o.user, o.sshPubKey)
-	o.config.Merge(c)
-	return nil
+	return o.config.Merge(c)
 }
 
 func (o *cloudInitOptions) bindFlags(cmd *cobra.Command) {

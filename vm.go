@@ -10,9 +10,8 @@ import (
 )
 
 type vmOptions struct {
-	names []string
-	vm    vm.Config
-	ci    cloudInitOptions
+	vm vm.Config
+	ci cloudInitOptions
 }
 
 func (o *vmOptions) complete() error {

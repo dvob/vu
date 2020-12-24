@@ -10,8 +10,6 @@ import (
 	"github.com/dvob/vu/internal/image"
 )
 
-var _ image.Manager = &Manager{}
-
 type Manager struct {
 	dir string
 }
@@ -22,13 +20,14 @@ func New(baseDir string) *Manager {
 	}
 }
 
-func (s *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
-	err := os.MkdirAll(s.dir, 0750)
+func (s *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, error) {
+	dirPath := filepath.Join(s.dir, pool)
+	err := os.MkdirAll(dirPath, 0750)
 	if err != nil {
 		return nil, err
 	}
 	reader := bufio.NewReader(img)
-	targetFile := filepath.Join(s.dir, name)
+	targetFile := filepath.Join(dirPath, name)
 
 	file, err := os.Create(targetFile)
 	if err != nil {
@@ -41,32 +40,33 @@ func (s *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
 	}
 
 	return &image.Image{
-		Name:     name,
-		Location: targetFile,
+		ID:   targetFile,
+		Name: name,
 	}, nil
 
 }
 
-func (s *Manager) List() ([]image.Image, error) {
-	files, err := ioutil.ReadDir(s.dir)
+func (s *Manager) List(pool string) ([]image.Image, error) {
+	dirPath := filepath.Join(s.dir, pool)
+	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
 
 	images := []image.Image{}
 	for _, file := range files {
-		absPath, err := filepath.Abs(filepath.Join(s.dir, file.Name()))
+		absPath, err := filepath.Abs(filepath.Join(dirPath, file.Name()))
 		if err != nil {
 			return nil, err
 		}
 		images = append(images, image.Image{
-			Name:     file.Name(),
-			Location: absPath,
+			ID:   absPath,
+			Name: file.Name(),
 		})
 	}
 	return images, nil
 }
 
-func (s *Manager) Remove(name string) error {
-	return os.Remove(filepath.Join(s.dir, name))
+func (s *Manager) Remove(ID string) error {
+	return os.Remove(ID)
 }

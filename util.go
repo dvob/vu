@@ -1,25 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"code.cloudfoundry.org/bytefmt"
 )
-
-// func bindFlags(cmd *cobra.Command) {
-// 	uri := ""
-// 	cmd.Flags().StringVar(&uri, "uri", "unix:/var/run/libvirt/libvirt-sock", "libvirt listen address. either in unix:/socket/path or tcp:127.0.0.1 format")
-// }
-
-func errPrint(e ...interface{}) {
-	fmt.Fprintln(os.Stderr, e...)
-}
-
-func errExit(e ...interface{}) {
-	errPrint(e...)
-	os.Exit(1)
-}
 
 // ByteSize implements the Value interface for flag parsing with pflag
 type ByteSize struct {

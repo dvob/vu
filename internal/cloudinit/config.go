@@ -86,7 +86,10 @@ func ConfigFromDir(dirs ...string) (*Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		config.Merge(c)
+		err = config.Merge(c)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return config, nil
 }

@@ -54,7 +54,7 @@ func (m *Manager) ListDetail() error {
 		fmt.Println(dom.Name)
 		for _, iface := range ifaces {
 			fmt.Printf("    %#v\n", iface)
-			fmt.Printf("    name=%s, hwaddr=%s, Addrs=%s", iface.Name, iface.Hwaddr, iface.Addrs)
+			fmt.Printf("    name=%s, hwaddr=%s, Addrs=%v", iface.Name, iface.Hwaddr, iface.Addrs)
 		}
 	}
 	return nil
