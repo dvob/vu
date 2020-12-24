@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/digitalocean/go-libvirt"
@@ -14,20 +15,18 @@ import (
 var _ image.Manager = &Manager{}
 
 type Manager struct {
-	path string
-	pool string
+	basePath string
 	*libvirt.Libvirt
 }
 
-func New(pool, path string, libvirt *libvirt.Libvirt) *Manager {
+func New(basePath string, libvirt *libvirt.Libvirt) *Manager {
 	return &Manager{
-		path,
-		pool,
+		basePath,
 		libvirt,
 	}
 }
 
-func (m *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
+func (m *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, error) {
 	vol := &libvirtxml.StorageVolume{
 		Name: name,
 		Capacity: &libvirtxml.StorageVolumeSize{
@@ -46,7 +45,7 @@ func (m *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
 		return nil, err
 	}
 
-	sp, err := m.createOrGetPool()
+	sp, err := m.createOrGetPool(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %w", err)
 	}
@@ -70,13 +69,13 @@ func (m *Manager) Create(name string, img io.ReadCloser) (*image.Image, error) {
 		return nil, fmt.Errorf("failed to get volume location: %w", err)
 	}
 	return &image.Image{
-		Name:     name,
-		Location: location,
+		ID:   location,
+		Name: name,
 	}, nil
 }
 
-func (m *Manager) List() ([]image.Image, error) {
-	sp, err := m.StoragePoolLookupByName(m.pool)
+func (m *Manager) List(pool string) ([]image.Image, error) {
+	sp, err := m.StoragePoolLookupByName(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
 	}
@@ -93,27 +92,23 @@ func (m *Manager) List() ([]image.Image, error) {
 			return nil, err
 		}
 		images = append(images, image.Image{
-			Name:     vol.Name,
-			Location: location,
+			ID:   location,
+			Name: vol.Name,
 		})
 	}
 	return images, nil
 }
 
-func (m *Manager) Remove(name string) error {
-	sp, err := m.StoragePoolLookupByName(m.pool)
+func (m *Manager) Remove(ID string) error {
+	vol, err := m.StorageVolLookupByPath(ID)
 	if err != nil {
 		return fmt.Errorf("faild to get storage pool: %s", err)
 	}
-	sv, err := m.StorageVolLookupByName(sp, name)
-	if err != nil {
-		return err
-	}
-	return m.StorageVolDelete(sv, 0)
+	return m.StorageVolDelete(vol, 0)
 }
 
-func (m *Manager) Get(name string) (*image.Image, error) {
-	sp, err := m.StoragePoolLookupByName(m.pool)
+func (m *Manager) Get(pool, name string) (*image.Image, error) {
+	sp, err := m.StoragePoolLookupByName(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %w", err)
 	}
@@ -128,20 +123,15 @@ func (m *Manager) Get(name string) (*image.Image, error) {
 		return nil, err
 	}
 	return &image.Image{
-		Name:     name,
-		Location: location,
+		Name: name,
+		ID:   location,
 	}, nil
 }
 
-func (m *Manager) Clone(baseImageName string, name string, newSize uint64) (*image.Image, error) {
-	sp, err := m.createOrGetPool()
+func (m *Manager) Clone(baseImageID, pool, name string, newSize uint64) (*image.Image, error) {
+	sp, err := m.createOrGetPool(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
-	}
-
-	baseImage, err := m.Get(baseImageName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get base image %s: %w", baseImageName, err)
 	}
 
 	// TODO add owner and group
@@ -154,7 +144,7 @@ func (m *Manager) Clone(baseImageName string, name string, newSize uint64) (*ima
 			},
 		},
 		BackingStore: &libvirtxml.StorageVolumeBackingStore{
-			Path: baseImage.Location,
+			Path: baseImageID,
 			Format: &libvirtxml.StorageVolumeTargetFormat{
 				// TODO: should not use fix format here
 				Type: "qcow2",
@@ -178,11 +168,11 @@ func (m *Manager) Clone(baseImageName string, name string, newSize uint64) (*ima
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone image: %w", err)
 	}
-	return m.Get(sv.Name)
+	return m.Get(pool, sv.Name)
 }
 
-func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
-	sp, err := m.StoragePoolLookupByName(m.pool)
+func (m *Manager) createOrGetPool(pool string) (*libvirt.StoragePool, error) {
+	sp, err := m.StoragePoolLookupByName(pool)
 	if err == nil {
 		return &sp, nil
 	}
@@ -192,20 +182,15 @@ func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
 		return nil, err
 	}
 
-	// TODO change permissions to libvirt user
-	// err = os.MkdirAll(m.path, 0777)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	pool := libvirtxml.StoragePool{
+	storagePool := libvirtxml.StoragePool{
 		Type: "dir",
-		Name: m.pool,
+		Name: pool,
 		Target: &libvirtxml.StoragePoolTarget{
-			Path: m.path,
+			Path: filepath.Join(m.basePath, pool),
 		},
 	}
 
-	xml, err := pool.Marshal()
+	xml, err := storagePool.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -213,13 +198,5 @@ func (m *Manager) createOrGetPool() (*libvirt.StoragePool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create storage pool: %w", err)
 	}
-	// err = m.StoragePoolBuild(sp, 0)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to build storage pool: %w", err)
-	// }
-	// err = m.StoragePoolCreate(sp, 0)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to build storage pool: %w", err)
-	// }
 	return &sp, nil
 }

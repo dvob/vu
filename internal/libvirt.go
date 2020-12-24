@@ -12,20 +12,14 @@ import (
 )
 
 type LibvirtOptions struct {
-	URI               string
-	ConfigStorageName string
-	ConfigStoragePath string
-	ImageStorageName  string
-	ImageStoragePath  string
+	URI          string
+	BaseImageDir string
 }
 
 func NewLibvirtDefaultOptions() *LibvirtOptions {
 	return &LibvirtOptions{
-		URI:               "unix:/var/run/libvirt/libvirt-sock",
-		ImageStorageName:  "vu_images",
-		ImageStoragePath:  "/var/lib/libvirt/images/vu/images",
-		ConfigStorageName: "vu_configs",
-		ConfigStoragePath: "/var/lib/libvirt/images/vu/configs",
+		URI:          "unix:/var/run/libvirt/libvirt-sock",
+		BaseImageDir: "/var/lib/libvirt/images/vu",
 	}
 
 }
@@ -36,9 +30,11 @@ func NewLibvirtManager(o *LibvirtOptions) (*Manager, error) {
 		return nil, err
 	}
 	return &Manager{
-		ConfigImage: image.New(o.ConfigStorageName, o.ConfigStoragePath, libvirtConn),
-		BaseImage:   image.New(o.ImageStorageName, o.ImageStoragePath, libvirtConn),
-		VM:          vm.New(libvirtConn),
+		ConfigImagePool: "config",
+		BaseImagePool:   "base",
+		VMImagePool:     "vm",
+		Image:           image.New(o.BaseImageDir, libvirtConn),
+		VM:              vm.New(libvirtConn),
 	}, nil
 }
 

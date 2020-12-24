@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
-	"strings"
 
 	"github.com/dvob/vu/internal/cloudinit"
 	"github.com/dvob/vu/internal/image"
@@ -14,17 +12,24 @@ import (
 )
 
 type Manager struct {
-	ConfigImage image.Manager
-	BaseImage   image.Manager
-	VM          vm.Manager
+	ConfigImagePool string
+	BaseImagePool   string
+	VMImagePool     string
+	Image           image.Manager
+	VM              vm.Manager
 }
 
-func (m *Manager) Create(name, baseImage string, vmConfig *vm.Config, ciConfig *cloudinit.Config) error {
-	image, err := m.BaseImage.Clone(baseImage, name, vmConfig.DiskSize)
+func (m *Manager) Create(name, baseImageName string, vmConfig *vm.Config, ciConfig *cloudinit.Config) error {
+	baseImage, err := m.Image.Get(m.BaseImagePool, baseImageName)
+	if err != nil {
+		return err
+	}
+
+	image, err := m.Image.Clone(baseImage.ID, m.VMImagePool, name, vmConfig.DiskSize)
 	if err != nil {
 		return fmt.Errorf("failed to clone image '%s': %w", baseImage, err)
 	}
-	vmConfig.Image = image.Location
+	vmConfig.Image = image.ID
 
 	isoConfig, err := ciConfig.ISO()
 	if err != nil {
@@ -34,17 +39,16 @@ func (m *Manager) Create(name, baseImage string, vmConfig *vm.Config, ciConfig *
 	var reader io.ReadCloser
 	reader = ioutil.NopCloser(bytes.NewBuffer(isoConfig))
 
-	isoImage, err := m.ConfigImage.Create(name, reader)
+	isoImage, err := m.Image.Create(m.ConfigImagePool, name, reader)
 	if err != nil {
-		_ = m.BaseImage.Remove(name)
+		// try to cleanup cloned base image
+		_ = m.Image.Remove(image.ID)
 		return fmt.Errorf("failed to store config ISO: %w", err)
 	}
-	vmConfig.ISO = isoImage.Location
+	vmConfig.ISO = isoImage.ID
 
 	err = m.VM.Create(name, vmConfig)
 	if err != nil {
-		//_ = m.BaseImage.Remove(name)
-		//_ = m.ConfigImage.Remove(name)
 		return err
 	}
 	return nil
@@ -56,17 +60,8 @@ func (m *Manager) Remove(name string) error {
 		return err
 	}
 
-	for _, imagePath := range state.Images {
-		// TODO: just NO. use proper abstraction here
-		var mgr image.Manager
-		if strings.Contains(imagePath, "config") {
-			mgr = m.ConfigImage
-		} else {
-			mgr = m.BaseImage
-		}
-
-		name := filepath.Base(imagePath)
-		err := mgr.Remove(name)
+	for _, imageID := range state.Images {
+		err := m.Image.Remove(imageID)
 		if err != nil {
 			return err
 		}

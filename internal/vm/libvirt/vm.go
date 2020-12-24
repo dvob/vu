@@ -194,7 +194,6 @@ func (m *Manager) Create(name string, cfg *vm.Config) error {
 	if err != nil {
 		return nil
 	}
-	fmt.Println(xml)
 
 	dom, err := m.DomainDefineXML(xml)
 	if err != nil {

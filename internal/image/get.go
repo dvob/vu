@@ -11,7 +11,7 @@ import (
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
-func AddFromURL(service Manager, name, src string, progress io.Writer) (*Image, error) {
+func AddFromURL(mgr Manager, pool, name, src string, progress io.Writer) (*Image, error) {
 	u, err := url.Parse(src)
 
 	if err != nil {
@@ -61,7 +61,7 @@ func AddFromURL(service Manager, name, src string, progress io.Writer) (*Image, 
 	if name == "" {
 		name = filepath.Base(u.Path)
 	}
-	image, err := service.Create(name, reader)
+	image, err := mgr.Create(pool, name, reader)
 	if err != nil {
 		return nil, err
 	}
