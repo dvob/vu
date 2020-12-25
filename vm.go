@@ -68,7 +68,7 @@ func newCreateCmd(mgr *vu.Manager) *cobra.Command {
 			}
 			return nil
 		},
-		ValidArgsFunction: completeBaseImageFunc(mgr),
+		ValidArgsFunction: completeBaseImageFunc(mgr, &mgr.BaseImagePool, 1),
 	}
 	options.bindFlags(cmd)
 	return cmd
@@ -162,17 +162,26 @@ func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
 
 func completeVMFunc(mgr *vu.Manager) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if len(args) != 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
 		vms, err := mgr.VM.List()
 		if err != nil {
 			fmt.Println(err)
 		}
 		vmNames := []string{}
 		for _, vm := range vms {
+			if contains(vm.Name, args) {
+				continue
+			}
 			vmNames = append(vmNames, vm.Name)
 		}
 		return vmNames, cobra.ShellCompDirectiveNoFileComp
 	}
+}
+
+func contains(str string, strs []string) bool {
+	for _, entry := range strs {
+		if str == entry {
+			return true
+		}
+	}
+	return false
 }
