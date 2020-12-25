@@ -4,13 +4,6 @@ import (
 	"net"
 )
 
-type NetworkParameter struct {
-	Address    string
-	Gateway    string
-	Nameserver []string
-	DHCP       bool
-}
-
 type NetworkConfig struct {
 	Raw       map[string]interface{} `json:"-"`
 	Version   int                    `json:"version"`
@@ -47,32 +40,39 @@ func (nc *NetworkConfig) Merge(nc2 *NetworkConfig) error {
 	return merge(nc, nc2)
 }
 
-func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {
+type NetworkConfigOptions struct {
+	Address    string
+	Gateway    string
+	Nameserver []string
+}
+
+func NewNetworkConfig(nco NetworkConfigOptions) (*NetworkConfig, error) {
 	var (
+		// will only work for one interface
 		matchName  = "en*"
 		gateway    string
 		nameserver = []string{}
 	)
 
-	if np.Address == "" {
+	if nco.Address == "" {
 		return nil, nil
 	}
 
-	_, ipNet, err := net.ParseCIDR(np.Address)
+	_, ipNet, err := net.ParseCIDR(nco.Address)
 	if err != nil {
 		return nil, err
 	}
 
-	if np.Gateway == "" {
+	if nco.Gateway == "" {
 		gateway = getGatewayIP(ipNet).String()
 	} else {
-		gateway = np.Gateway
+		gateway = nco.Gateway
 	}
 
-	if np.Nameserver == nil || len(np.Nameserver) == 0 {
+	if nco.Nameserver == nil || len(nco.Nameserver) == 0 {
 		nameserver = append(nameserver, gateway)
 	} else {
-		nameserver = np.Nameserver
+		nameserver = nco.Nameserver
 	}
 
 	c := &NetworkConfig{
@@ -82,7 +82,7 @@ func NewNetworkConfig(np *NetworkParameter) (*NetworkConfig, error) {
 				Match: &Match{
 					Name: &matchName,
 				},
-				Addresses: []string{np.Address},
+				Addresses: []string{nco.Address},
 				Gateway:   &gateway,
 				DNS: &DNS{
 					Servers: nameserver,
@@ -98,7 +98,7 @@ func getGatewayIP(ipNet *net.IPNet) net.IP {
 	return incrementIP(ipNet.IP, 1)
 }
 
-// increments IPhttps://stackoverflow.com/a/49057611
+// incrementIP increments an IP https://stackoverflow.com/a/49057611
 func incrementIP(ip net.IP, inc uint) net.IP {
 	i := ip.To4()
 	v := uint(i[0])<<24 + uint(i[1])<<16 + uint(i[2])<<8 + uint(i[3])

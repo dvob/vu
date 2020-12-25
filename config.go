@@ -20,9 +20,7 @@ type cloudInitOptions struct {
 	sshPubKeyFile string
 	passwordHash  string
 
-	ip      string
-	gateway string
-	dns     []string
+	networkOptions cloudinit.NetworkConfigOptions
 
 	profiles []string
 	dirs     []string
@@ -67,6 +65,7 @@ func (o *cloudInitOptions) complete() error {
 		o.sshPubKey = string(pubKey)
 	}
 
+	// load config from profiles
 	profileDirs, err := getAbsProfileDirs(o.profiles)
 	if err != nil {
 		return err
@@ -77,6 +76,7 @@ func (o *cloudInitOptions) complete() error {
 		return err
 	}
 
+	// load config from directories
 	dirConfig, err := cloudinit.ConfigFromDir(o.dirs...)
 	if err != nil {
 		return err
@@ -86,6 +86,16 @@ func (o *cloudInitOptions) complete() error {
 		return err
 	}
 
+	// construct network config
+	networkConfig, err := cloudinit.NewNetworkConfig(o.networkOptions)
+	if err != nil {
+		return err
+	}
+	if networkConfig != nil {
+		o.config.NetworkConfig = networkConfig
+	}
+
+	// set general defaults
 	if o.config.UserData == nil {
 		o.config.UserData = &cloudinit.UserData{}
 	}
@@ -93,6 +103,7 @@ func (o *cloudInitOptions) complete() error {
 		o.config.MetaData = &cloudinit.MetaData{}
 	}
 	c := cloudinit.NewDefaultConfig(o.name, o.user, o.sshPubKey)
+
 	return o.config.Merge(c)
 }
 
@@ -100,9 +111,9 @@ func (o *cloudInitOptions) bindFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.user, "user", "", "user name to create in the during startup")
 	cmd.Flags().StringVar(&o.sshPubKey, "ssh-pub-key", "", "ssh public key to use")
 	cmd.Flags().StringVar(&o.passwordHash, "password-hash", "", "Password hash to login without SSH over console. The hash can be generated with openssl passwd.")
-	cmd.Flags().StringVar(&o.ip, "ip", "", "configure static IPv4 address insted of DHCP. address has to be specified in CIDR notation.")
-	cmd.Flags().StringVar(&o.gateway, "gateway", "", "the default IPv4 gateway. if no gateway is configured the lowest IP")
-	cmd.Flags().StringSliceVar(&o.dns, "nameserver", []string{}, "configure the dns server address. if no address is configured the default gateway is used.")
+	cmd.Flags().StringVar(&o.networkOptions.Address, "ip", "", "configure static IPv4 address insted of using DHCP. address has to be specified in CIDR notation.")
+	cmd.Flags().StringVar(&o.networkOptions.Gateway, "gateway", "", "the default IPv4 gateway. if no gateway is configured the lowest IP")
+	cmd.Flags().StringSliceVar(&o.networkOptions.Nameserver, "dns", []string{}, "configure the dns server address. if no address is configured the default gateway is used.")
 	cmd.Flags().StringSliceVar(&o.profiles, "profile", []string{}, "base profile which want to use for our configuration")
 	cmd.Flags().StringSliceVar(&o.dirs, "dir", []string{}, "use configuration from directory as base configuration")
 }
