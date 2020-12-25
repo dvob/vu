@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"text/tabwriter"
 
 	vu "github.com/dvob/vu/internal"
 	"github.com/dvob/vu/internal/cloudinit"
@@ -127,9 +129,13 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			w := &tabwriter.Writer{}
+			w.Init(os.Stdout, 0, 8, 0, '\t', 0)
 			for _, vm := range vms {
-				fmt.Println(vm.Name)
+				fmt.Fprintf(w, "%s\t%s\t%s\n", vm.Name, vm.State, vm.IPAddress)
 			}
+			w.Flush()
 			return nil
 		},
 	}

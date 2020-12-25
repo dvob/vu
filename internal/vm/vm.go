@@ -5,8 +5,8 @@ type Manager interface {
 	Start(name string) error
 	Shutdown(name string, force bool) error
 	Remove(name string) error
-	List() ([]State, error)
-	Get(name string) (*State, error)
+	List() ([]VM, error)
+	Get(name string) (*VM, error)
 }
 
 type Config struct {
@@ -18,7 +18,7 @@ type Config struct {
 	DiskSize uint64
 }
 
-type State struct {
+type VM struct {
 	Name      string
 	State     string
 	IPAddress string

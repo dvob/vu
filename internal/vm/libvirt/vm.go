@@ -2,10 +2,15 @@ package libvirt
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/dvob/vu/internal/vm"
 	libvirtxml "github.com/libvirt/libvirt-go-xml"
+)
+
+const (
+	UnusedFlag uint32 = 0
 )
 
 var _ vm.Manager = &Manager{}
@@ -60,13 +65,13 @@ func (m *Manager) ListDetail() error {
 	return nil
 }
 
-func (m *Manager) List() ([]vm.State, error) {
+func (m *Manager) List() ([]vm.VM, error) {
 	// TODO: not sure why first paramater has to be 1
 	domains, _, err := m.ConnectListAllDomains(1, 0)
 	if err != nil {
 		return nil, err
 	}
-	vms := []vm.State{}
+	vms := []vm.VM{}
 	for _, dom := range domains {
 		vm, err := m.get(dom)
 		if err != nil {
@@ -77,7 +82,7 @@ func (m *Manager) List() ([]vm.State, error) {
 	return vms, nil
 }
 
-func (m *Manager) Get(name string) (*vm.State, error) {
+func (m *Manager) Get(name string) (*vm.VM, error) {
 	dom, err := m.DomainLookupByName(name)
 	if err != nil {
 		return nil, err
@@ -85,11 +90,12 @@ func (m *Manager) Get(name string) (*vm.State, error) {
 	return m.get(dom)
 }
 
-func (m *Manager) get(dom libvirt.Domain) (*vm.State, error) {
-	state := &vm.State{
+func (m *Manager) get(dom libvirt.Domain) (*vm.VM, error) {
+	state := &vm.VM{
 		Name: dom.Name,
 	}
 
+	// get disks
 	xml, err := m.DomainGetXMLDesc(dom, 0)
 	if err != nil {
 		return nil, err
@@ -100,7 +106,69 @@ func (m *Manager) get(dom libvirt.Domain) (*vm.State, error) {
 		return nil, err
 	}
 	state.Images = getDisksFromDomain(vmDef)
+
+	// get IP
+	state.IPAddress = m.getIP(dom)
+
+	// state
+	domState, _, err := m.DomainGetState(dom, UnusedFlag)
+	if err != nil {
+		return nil, err
+	}
+	state.State = stateToString(libvirt.DomainState(domState))
 	return state, nil
+}
+
+func stateToString(state libvirt.DomainState) string {
+	switch state {
+	case libvirt.DomainRunning:
+		return "running"
+	case libvirt.DomainBlocked:
+		return "blocked"
+	case libvirt.DomainPaused:
+		return "paused"
+	case libvirt.DomainShutdown:
+		return "shutdown"
+	case libvirt.DomainShutoff:
+		return "shutoff"
+	case libvirt.DomainCrashed:
+		return "crashed"
+	case libvirt.DomainPmsuspended:
+		return "pmsuspended"
+	default:
+		return strconv.Itoa(int(state))
+	}
+}
+
+func (m *Manager) getIP(dom libvirt.Domain) string {
+	// dhcp leases
+	ifs, err := m.DomainInterfaceAddresses(dom, 0, UnusedFlag)
+	if err == nil && len(ifs) > 0 {
+		ip := getFirstIP(ifs)
+		if ip != "" {
+			return ip
+		}
+	}
+
+	// arp cache
+	ifs, err = m.DomainInterfaceAddresses(dom, 2, UnusedFlag)
+	if err == nil && len(ifs) > 0 {
+		ip := getFirstIP(ifs)
+		if ip != "" {
+			return ip
+		}
+	}
+
+	return "n/a"
+}
+
+func getFirstIP(ifaces []libvirt.DomainInterface) string {
+	for _, iface := range ifaces {
+		if len(iface.Addrs) > 0 {
+			return iface.Addrs[0].Addr
+		}
+	}
+	return ""
 }
 
 func getDisksFromDomain(dom *libvirtxml.Domain) []string {
@@ -218,7 +286,7 @@ func (m *Manager) Remove(name string) error {
 		return err
 	}
 
-	stateInt, _, err := m.DomainGetState(dom, 0)
+	stateInt, _, err := m.DomainGetState(dom, UnusedFlag)
 	state := libvirt.DomainState(stateInt)
 	if err != nil {
 		return err
