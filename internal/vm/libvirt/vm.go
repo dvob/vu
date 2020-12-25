@@ -187,6 +187,13 @@ func (m *Manager) Create(name string, cfg *vm.Config) error {
 			Serials: []libvirtxml.DomainSerial{
 				{},
 			},
+			Videos: []libvirtxml.DomainVideo{
+				{
+					Model: libvirtxml.DomainVideoModel{
+						Type: "vga",
+					},
+				},
+			},
 		},
 	}
 
