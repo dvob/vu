@@ -5,9 +5,9 @@ import "bytes"
 // UserData is a struct to render the user data of the cloud init configuration
 type UserData struct {
 	Raw map[string]interface{} `json:"-"`
-	//Hostname string
-	//Password        string `yaml:"password,omitempty"`
-	//SSHPasswordAuth bool   `yaml:"ssh_pwauth,omitempty"`
+	// Hostname string
+	// Password        string `yaml:"password,omitempty"`
+	// SSHPasswordAuth bool   `yaml:"ssh_pwauth,omitempty"`
 	Users []User `json:"users,omitempty"`
 }
 

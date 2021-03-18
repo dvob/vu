@@ -78,7 +78,7 @@ func NewNetworkConfig(nco NetworkConfigOptions) (*NetworkConfig, error) {
 	c := &NetworkConfig{
 		Version: 2,
 		Ethernets: map[string]Ethernet{
-			"default": Ethernet{
+			"default": {
 				Match: &Match{
 					Name: &matchName,
 				},
@@ -91,7 +91,6 @@ func NewNetworkConfig(nco NetworkConfigOptions) (*NetworkConfig, error) {
 		},
 	}
 	return c, nil
-
 }
 
 func getGatewayIP(ipNet *net.IPNet) net.IP {

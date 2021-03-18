@@ -151,7 +151,7 @@ func configFromDir(dir string) (*Config, error) {
 
 // ToDir writes the cloud init configuration to a directory
 func (c *Config) ToDir(dir string) error {
-	err := os.MkdirAll(dir, 0750)
+	err := os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return err
 	}

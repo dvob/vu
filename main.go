@@ -28,9 +28,7 @@ func main() {
 }
 
 func newRootCmd() *cobra.Command {
-	var (
-		mgr = &vu.Manager{}
-	)
+	mgr := &vu.Manager{}
 	opts := vu.NewLibvirtDefaultOptions()
 	cmd := &cobra.Command{
 		Use:              "vu",

@@ -143,9 +143,7 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 }
 
 func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
-	var (
-		force bool
-	)
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "shutdown NAME...",
 		Short: "shutdown VMs",

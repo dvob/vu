@@ -22,7 +22,7 @@ func New(baseDir string) *Manager {
 
 func (s *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, error) {
 	dirPath := filepath.Join(s.dir, pool)
-	err := os.MkdirAll(dirPath, 0750)
+	err := os.MkdirAll(dirPath, 0o750)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,6 @@ func (s *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, er
 		ID:   targetFile,
 		Name: name,
 	}, nil
-
 }
 
 func (s *Manager) List(pool string) ([]image.Image, error) {

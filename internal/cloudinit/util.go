@@ -92,5 +92,5 @@ func marshalToFile(file string, m Marshaler) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(file, data, 0640)
+	return ioutil.WriteFile(file, data, 0o640)
 }

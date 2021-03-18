@@ -179,7 +179,7 @@ func newConfigWriteCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				return ioutil.WriteFile(target, isoData, 0640)
+				return ioutil.WriteFile(target, isoData, 0o640)
 			}
 			return o.config.ToDir(target)
 		},

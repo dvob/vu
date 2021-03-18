@@ -13,7 +13,6 @@ import (
 
 func AddFromURL(mgr Manager, pool, name, src string, progress io.Writer) (*Image, error) {
 	u, err := url.Parse(src)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse url: %s", err)
 	}
