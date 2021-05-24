@@ -18,6 +18,7 @@ type User struct {
 	Sudo              string   `json:"sudo,omitempty"`
 	LockPasswd        *bool    `json:"lock_passwd,omitempty"`
 	Passwd            string   `json:"passwd,omitempty"`
+	Shell             string   `json:"shell"`
 }
 
 func (ud *UserData) Marshal() ([]byte, error) {

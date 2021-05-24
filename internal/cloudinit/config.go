@@ -39,6 +39,7 @@ func NewDefaultConfig(name, user, sshPubKey string) *Config {
 					SSHAuthorizedKeys: []string{
 						sshPubKey,
 					},
+					Shell: "/bin/bash",
 				},
 			},
 		},
