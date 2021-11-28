@@ -7,6 +7,7 @@ require (
 	github.com/digitalocean/go-libvirt v0.0.0-20210723161134-761cfeeb5968
 	github.com/ghodss/yaml v1.0.0
 	github.com/imdario/mergo v0.3.12
+	github.com/kdomanski/iso9660 v0.2.1
 	github.com/libvirt/libvirt-go-xml v7.4.0+incompatible
 	github.com/matryer/is v1.4.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect

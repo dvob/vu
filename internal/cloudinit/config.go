@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -17,7 +16,6 @@ type Config struct {
 }
 
 var (
-	tmpPrefix       = "vu_iso"
 	metaFileName    = "meta-data"
 	userFileName    = "user-data"
 	networkFileName = "network-config"
@@ -176,39 +174,6 @@ func (c *Config) ToDir(dir string) error {
 		return err
 	}
 	return nil
-}
-
-// ISO returns the cloud init configuration as ISO image
-func (c *Config) ISO() ([]byte, error) {
-	tmp, err := ioutil.TempDir("", tmpPrefix)
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(tmp)
-
-	err = c.ToDir(tmp)
-	if err != nil {
-		return nil, err
-	}
-
-	stdErr := &bytes.Buffer{}
-	stdOut := &bytes.Buffer{}
-
-	cmdArgs := []string{
-		"-volid",
-		"cidata",
-		"-joliet",
-		"-rock",
-		tmp,
-	}
-	cmd := exec.Command("mkisofs", cmdArgs...)
-	cmd.Stdout = stdOut
-	cmd.Stderr = stdErr
-	err = cmd.Run()
-	if err != nil {
-		return nil, fmt.Errorf("iso creation failed. stderr: '%s', err: %w", stdErr.String(), err)
-	}
-	return stdOut.Bytes(), nil
 }
 
 // String returns a string representation of all cloud-init configs
