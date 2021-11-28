@@ -75,12 +75,12 @@ func (m *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, er
 }
 
 func (m *Manager) List(pool string) ([]image.Image, error) {
-	sp, err := m.StoragePoolLookupByName(pool)
+	sp, err := m.createOrGetPool(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %s", err)
 	}
 
-	vols, _, err := m.StoragePoolListAllVolumes(sp, 1, 0)
+	vols, _, err := m.StoragePoolListAllVolumes(*sp, 1, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +108,12 @@ func (m *Manager) Remove(ID string) error {
 }
 
 func (m *Manager) Get(pool, name string) (*image.Image, error) {
-	sp, err := m.StoragePoolLookupByName(pool)
+	sp, err := m.createOrGetPool(pool)
 	if err != nil {
 		return nil, fmt.Errorf("faild to get storage pool: %w", err)
 	}
 
-	sv, err := m.StorageVolLookupByName(sp, name)
+	sv, err := m.StorageVolLookupByName(*sp, name)
 	if err != nil {
 		return nil, err
 	}
