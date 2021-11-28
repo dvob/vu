@@ -168,7 +168,8 @@ func completeVMFunc(mgr *vu.Manager) func(cmd *cobra.Command, args []string, toC
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		vms, err := mgr.VM.List()
 		if err != nil {
-			fmt.Println(err)
+			cobra.CompErrorln(err.Error())
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		vmNames := []string{}
 		for _, vm := range vms {

@@ -104,7 +104,8 @@ func completeBaseImageFunc(mgr *vu.Manager, pool *string, max int) func(cmd *cob
 		}
 		images, err := mgr.Image.List(*pool)
 		if err != nil {
-			fmt.Println(err)
+			cobra.CompErrorln(err.Error())
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		imageNames := []string{}
 		for _, img := range images {
