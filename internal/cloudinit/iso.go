@@ -12,7 +12,9 @@ func (c *Config) ISO() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer iw.Cleanup()
+	defer func() {
+		_ = iw.Cleanup()
+	}()
 	if c.MetaData != nil {
 		err = marshalToIso(iw, metaFileName, c.MetaData)
 		if err != nil {
@@ -32,8 +34,8 @@ func (c *Config) ISO() ([]byte, error) {
 		return nil, err
 	}
 	isoImage := &bytes.Buffer{}
-	iw.WriteTo(isoImage, "cidata")
-	return isoImage.Bytes(), nil
+	err = iw.WriteTo(isoImage, "cidata")
+	return isoImage.Bytes(), err
 }
 
 func marshalToIso(iw *iso9660.ImageWriter, file string, m Marshaler) error {
