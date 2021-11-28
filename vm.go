@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -131,7 +132,8 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 			}
 
 			w := &tabwriter.Writer{}
-			w.Init(os.Stdout, 0, 8, 0, '\t', 0)
+			w.Init(os.Stdout, 0, 8, 2, ' ', 0)
+			fmt.Fprintf(w, "NAME\tSTATE\tIP\n")
 			for _, vm := range vms {
 				fmt.Fprintf(w, "%s\t%s\t%s\n", vm.Name, vm.State, vm.IPAddress)
 			}
@@ -142,6 +144,28 @@ func newListCmd(mgr *vu.Manager) *cobra.Command {
 	return cmd
 }
 
+func newShowCmd(mgr *vu.Manager) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "show information about a VM",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			vmName := args[0]
+			vm, err := mgr.VM.Get(vmName)
+			if err != nil {
+				return err
+			}
+
+			raw, err := json.MarshalIndent(vm, "", "  ")
+			if err != nil {
+				return err
+			}
+			_, err = os.Stdout.Write(raw)
+			return err
+		},
+	}
+	return cmd
+}
 func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
 	var force bool
 	cmd := &cobra.Command{
