@@ -52,14 +52,29 @@ func connectLibvirt(uri string) (*libvirt.Libvirt, error) {
 
 	network := parts[0]
 	address := parts[1]
-	c, err := net.DialTimeout(network, address, 2*time.Second)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to libvirtd: %s", err)
-	}
+	d := newDialer(network, address, 2*time.Second)
 
-	libvirtConn := libvirt.New(c)
+	libvirtConn := libvirt.NewWithDialer(d)
 	if err := libvirtConn.Connect(); err != nil {
 		return nil, fmt.Errorf("failed to connect: %v", err)
 	}
 	return libvirtConn, nil
+}
+
+type dialer struct {
+	network string
+	address string
+	timeout time.Duration
+}
+
+func newDialer(network string, address string, timeout time.Duration) *dialer {
+	return &dialer{
+		network: network,
+		address: address,
+		timeout: timeout,
+	}
+}
+
+func (d *dialer) Dial() (net.Conn, error) {
+	return net.DialTimeout(d.network, d.address, d.timeout)
 }
