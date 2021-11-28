@@ -21,7 +21,7 @@ type Manager struct {
 func (m *Manager) Create(name, baseImageName string, vmConfig *vm.Config, ciConfig *cloudinit.Config) error {
 	baseImage, err := m.Image.Get(m.BaseImagePool, baseImageName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get image: %w", err)
 	}
 
 	image, err := m.Image.Clone(baseImage.ID, m.VMImagePool, name, vmConfig.DiskSize)

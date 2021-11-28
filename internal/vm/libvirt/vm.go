@@ -272,10 +272,13 @@ func (m *Manager) Create(name string, cfg *vm.Config) error {
 
 	dom, err := m.DomainDefineXML(xml)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to define domain: %w", err)
 	}
 
 	err = m.DomainCreate(dom)
+	if err != nil {
+		return fmt.Errorf("failed to create domain: %w", err)
+	}
 	return err
 }
 
