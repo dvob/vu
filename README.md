@@ -17,6 +17,11 @@ sudo apt install libvirt-daemon-system
 sudo adduser $USER libvirt
 ```
 
+* Install `vu` under `~/bin`
+```
+curl -L -o ~/bin/vu https://github.com/dvob/vu/releases/download/v0.0.4/vu_linux_amd64 && chmod +x ~/bin/vu
+```
+
 * Run a VM
 ```bash
 # get  a base image
@@ -29,7 +34,20 @@ vu create focal-minimal-cloudimg-amd64.img mytest1
 vu list
 ```
 
-To connect to the VM it is recommended to install the [Libvirt NSS module](https://libvirt.org/nss.html) and then you can do:
+To connect to the VM it is recommended to install the [Libvirt NSS module](https://libvirt.org/nss.html) and configure it accordingly:
+```
+# on Ubuntu
+sudo apt-get install libnss-libvirt
+```
+
+`/etc/nsswitch.conf`:
+```
+# ...
+hosts:    files libvirt dns
+# ...
+```
+
+Then you can simply connect to server like this:
 ```
 ssh mytest1
 ```
@@ -47,6 +65,15 @@ vu image add https://cloud-images.ubuntu.com/minimal/daily/focal/current/focal-m
 
 # rocky linux image
 vu image add https://download.rockylinux.org/pub/rocky/8.5/images/Rocky-8-GenericCloud-8.5-20211114.2.x86_64.qcow2
+
+# with rocky 8.6 the image does not contain sudo and you have to enhance the base configuration as follows
+mkdir -p ~/.vu/sudo
+cat <<EOF > ~/.vu/sudo/user-data
+{
+  "packages": ["sudo"]
+}
+EOF
+vu create --dir ~/.vu/sudo Rocky-8-GenericCloud-8.6-20220515.x86_64.qcow2 rocky
 
 # add centos image
 vu image add https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.3.2011-20201204.2.x86_64.qcow2
