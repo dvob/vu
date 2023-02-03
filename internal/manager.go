@@ -3,7 +3,7 @@ package internal
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/dvob/vu/internal/cloudinit"
 	"github.com/dvob/vu/internal/image"
@@ -35,7 +35,7 @@ func (m *Manager) Create(name, baseImageName string, vmConfig *vm.Config, ciConf
 		return fmt.Errorf("failed to create config ISO: %w", err)
 	}
 
-	reader := ioutil.NopCloser(bytes.NewBuffer(isoConfig))
+	reader := io.NopCloser(bytes.NewBuffer(isoConfig))
 
 	isoImage, err := m.Image.Create(m.ConfigImagePool, name, reader)
 	if err != nil {

@@ -2,7 +2,7 @@ package cloudinit
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"reflect"
 
 	"github.com/ghodss/yaml"
@@ -14,17 +14,17 @@ type Marshaler interface {
 	Unmarshal([]byte) error
 }
 
-func structToMap(s interface{}) (map[string]interface{}, error) {
+func structToMap(s any) (map[string]any, error) {
 	data, err := json.Marshal(s)
 	if err != nil {
 		return nil, err
 	}
-	result := map[string]interface{}{}
+	result := map[string]any{}
 	err = json.Unmarshal(data, &result)
 	return result, err
 }
 
-func mergeMarshal(overrides interface{}, raw map[string]interface{}) ([]byte, error) {
+func mergeMarshal(overrides any, raw map[string]any) ([]byte, error) {
 	overridesMap, err := structToMap(overrides)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func merge(m1, m2 Marshaler) error {
 	if err != nil {
 		return err
 	}
-	m1Raw := map[string]interface{}{}
+	m1Raw := map[string]any{}
 	err = yaml.Unmarshal(m1Data, &m1Raw)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func merge(m1, m2 Marshaler) error {
 	if err != nil {
 		return err
 	}
-	m2Raw := map[string]interface{}{}
+	m2Raw := map[string]any{}
 	err = yaml.Unmarshal(m2Data, &m2Raw)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func merge(m1, m2 Marshaler) error {
 	return m1.Unmarshal(data)
 }
 
-func rawUnmarshal(data []byte, o interface{}, raw *map[string]interface{}) error {
+func rawUnmarshal(data []byte, o any, raw *map[string]any) error {
 	err := yaml.Unmarshal(data, &raw)
 	if err != nil {
 		return err
@@ -92,5 +92,5 @@ func marshalToFile(file string, m Marshaler) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(file, data, 0o640)
+	return os.WriteFile(file, data, 0o640)
 }

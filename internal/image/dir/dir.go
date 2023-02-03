@@ -3,7 +3,6 @@ package dir
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -47,7 +46,7 @@ func (s *Manager) Create(pool, name string, img io.ReadCloser) (*image.Image, er
 
 func (s *Manager) List(pool string) ([]image.Image, error) {
 	dirPath := filepath.Join(s.dir, pool)
-	files, err := ioutil.ReadDir(dirPath)
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}

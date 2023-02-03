@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -58,7 +57,7 @@ func (o *cloudInitOptions) complete() error {
 			o.sshPubKeyFile = filepath.Join(userHome, ".ssh", "id_rsa.pub")
 		}
 
-		pubKey, err := ioutil.ReadFile(o.sshPubKeyFile)
+		pubKey, err := os.ReadFile(o.sshPubKeyFile)
 		if err != nil {
 			return err
 		}
@@ -179,7 +178,7 @@ func newConfigWriteCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				return ioutil.WriteFile(target, isoData, 0o640)
+				return os.WriteFile(target, isoData, 0o640)
 			}
 			return o.config.ToDir(target)
 		},

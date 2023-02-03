@@ -29,7 +29,7 @@ users:
 	output, err := ud.Marshal()
 	is.NoErr(err)
 
-	raw := map[string]interface{}{}
+	raw := map[string]any{}
 	err = yaml.Unmarshal(output, &raw)
 	is.NoErr(err)
 
@@ -49,7 +49,7 @@ func Test_MergeConfig(t *testing.T) {
 	gw1 := "192.168.1.1"
 	c1 := &Config{
 		UserData: &UserData{
-			Raw: map[string]interface{}{
+			Raw: map[string]any{
 				"final_message": "Bla bli blo",
 			},
 			Users: []User{
@@ -89,7 +89,7 @@ func Test_MergeConfig(t *testing.T) {
 			Hostname: "myserver.example.com",
 		},
 		UserData: &UserData{
-			Raw: map[string]interface{}{
+			Raw: map[string]any{
 				"final_message": "Bla bli blo",
 			},
 			Users: []User{

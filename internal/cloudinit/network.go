@@ -5,7 +5,7 @@ import (
 )
 
 type NetworkConfig struct {
-	Raw       map[string]interface{} `json:"-"`
+	Raw       map[string]any `json:"-"`
 	Version   int                    `json:"version"`
 	Ethernets map[string]Ethernet    `json:"ethernets"`
 }

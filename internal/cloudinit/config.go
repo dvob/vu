@@ -3,7 +3,6 @@ package cloudinit
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -106,7 +105,7 @@ func configFromDir(dir string) (*Config, error) {
 
 	c := &Config{}
 
-	data, err := ioutil.ReadFile(metaFile)
+	data, err := os.ReadFile(metaFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -119,7 +118,7 @@ func configFromDir(dir string) (*Config, error) {
 		}
 	}
 
-	data, err = ioutil.ReadFile(userFile)
+	data, err = os.ReadFile(userFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -132,7 +131,7 @@ func configFromDir(dir string) (*Config, error) {
 		}
 	}
 
-	data, err = ioutil.ReadFile(networkFile)
+	data, err = os.ReadFile(networkFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
