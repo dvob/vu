@@ -67,7 +67,7 @@ type dialer struct {
 	timeout time.Duration
 }
 
-func newDialer(network string, address string, timeout time.Duration) *dialer {
+func newDialer(network, address string, timeout time.Duration) *dialer {
 	return &dialer{
 		network: network,
 		address: address,

@@ -166,6 +166,7 @@ func newShowCmd(mgr *vu.Manager) *cobra.Command {
 	}
 	return cmd
 }
+
 func newShutdownCmd(mgr *vu.Manager) *cobra.Command {
 	var force bool
 	cmd := &cobra.Command{
